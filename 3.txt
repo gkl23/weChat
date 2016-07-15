@@ -1,0 +1,138 @@
+{
+"BaseResponse": {
+"Ret": 0,
+"ErrMsg": ""
+}
+,
+"AddMsgCount": 1,
+"AddMsgList": [{
+"MsgId": "1019271362435095789",
+"FromUserName": "@19f75452b3dece8dd82434f83a6fa3f2c4d60bf0faf111643cd40303e0770a5c",
+"ToUserName": "@2bded5f036943bafba4065a39ce33557773bd20267e8ee2f7045b3b0bce307f2",
+"MsgType": 51,
+"Content": "&lt;msg&gt;<br/>&lt;op id='2'&gt;<br/>&lt;username&gt;wxid_btd42izsppb621&lt;/username&gt;<br/>&lt;/op&gt;<br/>&lt;/msg&gt;",
+"Status": 3,
+"ImgStatus": 1,
+"CreateTime": 1468506259,
+"VoiceLength": 0,
+"PlayLength": 0,
+"FileName": "",
+"FileSize": "",
+"MediaId": "",
+"Url": "",
+"AppMsgType": 0,
+"StatusNotifyCode": 2,
+"StatusNotifyUserName": "@2bded5f036943bafba4065a39ce33557773bd20267e8ee2f7045b3b0bce307f2",
+"RecommendInfo": {
+"UserName": "",
+"NickName": "",
+"QQNum": 0,
+"Province": "",
+"City": "",
+"Content": "",
+"Signature": "",
+"Alias": "",
+"Scene": 0,
+"VerifyFlag": 0,
+"AttrStatus": 0,
+"Sex": 0,
+"Ticket": "",
+"OpCode": 0
+}
+,
+"ForwardFlag": 0,
+"AppInfo": {
+"AppID": "",
+"Type": 0
+}
+,
+"HasProductId": 0,
+"Ticket": "",
+"ImgHeight": 0,
+"ImgWidth": 0,
+"SubMsgType": 0,
+"NewMsgId": 1019271362435095789
+}
+],
+"ModContactCount": 0,
+"ModContactList": [],
+"DelContactCount": 0,
+"DelContactList": [],
+"ModChatRoomMemberCount": 0,
+"ModChatRoomMemberList": [],
+"Profile": {
+"BitFlag": 0,
+"UserName": {
+"Buff": ""
+}
+,
+"NickName": {
+"Buff": ""
+}
+,
+"BindUin": 0,
+"BindEmail": {
+"Buff": ""
+}
+,
+"BindMobile": {
+"Buff": ""
+}
+,
+"Status": 0,
+"Sex": 0,
+"PersonalCard": 0,
+"Alias": "",
+"HeadImgUpdateFlag": 0,
+"HeadImgUrl": "",
+"Signature": ""
+}
+,
+"ContinueFlag": 0,
+"SyncKey": {
+"Count": 10,
+"List": [{
+"Key": 1,
+"Val": 658053353
+}
+,{
+"Key": 2,
+"Val": 658053461
+}
+,{
+"Key": 3,
+"Val": 658052641
+}
+,{
+"Key": 11,
+"Val": 658051609
+}
+,{
+"Key": 13,
+"Val": 658050013
+}
+,{
+"Key": 201,
+"Val": 1468506259
+}
+,{
+"Key": 1000,
+"Val": 1468493461
+}
+,{
+"Key": 1001,
+"Val": 1468493492
+}
+,{
+"Key": 1002,
+"Val": 1468380331
+}
+,{
+"Key": 1005,
+"Val": 1468396698
+}
+]
+}
+,
+"SKey": ""
+}

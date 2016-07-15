@@ -1,0 +1,184 @@
+{
+"BaseResponse": {
+"Ret": 0,
+"ErrMsg": ""
+}
+,
+"Count": 1,
+"ContactList": [{
+"Uin": 0,
+"UserName": "@@ab0304e7e6700b685e5208a704c4261a7946d4220194646cd0c1b4c6e171fdbf",
+"NickName": "亲人群",
+"HeadImgUrl": "/cgi-bin/mmwebwx-bin/webwxgetheadimg?seq=655023915&username=@@ab0304e7e6700b685e5208a704c4261a7946d4220194646cd0c1b4c6e171fdbf&skey=",
+"ContactFlag": 2,
+"MemberCount": 11,
+"MemberList": [{
+"Uin": 0,
+"UserName": "@22a4f4706f793fe4a983aea91cc1315275e22f48f6b02d1acaf819607bfdcc15",
+"NickName": "圣女",
+"AttrStatus": 102437,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": ""
+}
+,{
+"Uin": 0,
+"UserName": "@39a49093b4256b9d9392d93c411a7dcb26305d38fb7a39f60ba8874a567a0c53",
+"NickName": "胡先生",
+"AttrStatus": 102437,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "胡传",
+"KeyWord": ""
+}
+,{
+"Uin": 0,
+"UserName": "@89a6c25ddf4b29c0530b2042fb4cbb0b839ada3f7f5d3f63aaff100b090df039",
+"NickName": "红尘",
+"AttrStatus": 99109,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": ""
+}
+,{
+"Uin": 0,
+"UserName": "@17d1654271986190fc7b536d97f6dfaea5373d4da8cbc58b40a304850a7c9027",
+"NickName": "绿茶",
+"AttrStatus": 1061,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": ""
+}
+,{
+"Uin": 0,
+"UserName": "@19f75452b3dece8dd82434f83a6fa3f2c4d60bf0faf111643cd40303e0770a5c",
+"NickName": "GuiltyCrown",
+"AttrStatus": 4197,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": ""
+}
+,{
+"Uin": 0,
+"UserName": "@d58a5675751027e689ed77f503aefae7",
+"NickName": "他们都叫我后生",
+"AttrStatus": 104551,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": "bao"
+}
+,{
+"Uin": 0,
+"UserName": "@41aca31f04e9ae55f759d74f11aa0795f0736ab4af314a2b2b2d9225e4bdd0ea",
+"NickName": "老胡",
+"AttrStatus": 4133,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": ""
+}
+,{
+"Uin": 0,
+"UserName": "@3a732e7fa71f1c173dc2b677753686ef",
+"NickName": "大象漫步WalkingElephant",
+"AttrStatus": 103863,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": "qq5"
+}
+,{
+"Uin": 0,
+"UserName": "@6527abbaf89401a60455de2e0267caa9",
+"NickName": "风义",
+"AttrStatus": 102439,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": "HFY"
+}
+,{
+"Uin": 0,
+"UserName": "@961bb2f451aec3e3ac2214670f4ccd3a4627bec4eb5f579d1c533fd2aafa2e50",
+"NickName": "赤橙黄绿靑兰紫",
+"AttrStatus": 100389,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": ""
+}
+,{
+"Uin": 0,
+"UserName": "@fef49a73d4ca073613eda597c5d52e7d3ec27641b898fe59d659f1afc2336c95",
+"NickName": "立",
+"AttrStatus": 102949,
+"PYInitial": "",
+"PYQuanPin": "",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"MemberStatus": 0,
+"DisplayName": "",
+"KeyWord": ""
+}
+],
+"RemarkName": "",
+"HideInputBarFlag": 0,
+"Sex": 0,
+"Signature": "",
+"VerifyFlag": 0,
+"OwnerUin": 922438912,
+"PYInitial": "QRQ",
+"PYQuanPin": "qinrenqun",
+"RemarkPYInitial": "",
+"RemarkPYQuanPin": "",
+"StarFriend": 0,
+"AppAccountFlag": 0,
+"Statues": 0,
+"AttrStatus": 0,
+"Province": "",
+"City": "",
+"Alias": "",
+"SnsFlag": 0,
+"UniFriend": 0,
+"DisplayName": "",
+"ChatRoomId": 0,
+"KeyWord": "",
+"EncryChatRoomId": "@29084fa25709f617b063788f9d1b579f"
+}
+]
+}
