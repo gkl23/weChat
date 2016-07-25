@@ -1,7 +1,13 @@
 <component name="libraryTable">
   <library name="blade-kit-1.3.0M1">
     <CLASSES>
-      <root url="jar://$USER_HOME$/Desktop/blade-kit-1.3.0M1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/blade-kit-1.3.0M1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/commons-beanutils-1.7.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/commons-collections-3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/commons-lang-2.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/commons-logging.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ezmorph-1.0.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/json-lib-2.4-jdk15.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
