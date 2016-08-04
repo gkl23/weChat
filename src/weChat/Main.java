@@ -13,6 +13,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -25,9 +26,10 @@ import net.sf.json.JSONObject;
 import javax.swing.*;
 
 
-public class Main extends JFrame {
+public class Main extends JFrame implements Runnable{
     private static HttpRequest httpRequest;
-    private static Boolean flag = false;
+    private static Boolean flag = true;
+    private static Boolean flag1 = true;
     private static String url;
     private static String timeStamp;
     private static String uuid;
@@ -37,26 +39,33 @@ public class Main extends JFrame {
     private static String pass_ticket;
     private static String DeviceID;
     private static JSONObject js;
-    private static String userID;
+    private static String userID="";
+    private static String memberID="";
+    private static String groupID="";
     private static List<String> activeGroupId = new ArrayList<>();//存放最近活跃的群id
     private static List<String> unactiveGroupId = new ArrayList<>();//存放最近不活跃的群id
     private static List<UserInfo> userInfoList = new ArrayList<>();//存放用户好友及订阅号，公众号信息
     private static List<GroupInfo> groupInfoList = new ArrayList<>();//存放群信息
+    private static Map<String,String> publicReply = new HashMap<>();//存放公开关键词回复
+    private static Map<String,String> privateReply = new HashMap<>();//存放私密关键词回复
     private static JSONObject syncKey;
     private static StringBuffer syncKeyList = new StringBuffer();
     private static String header;
     private static String host;
     private static JSONObject baseRequest = new JSONObject();
+    private static JSONObject verifyUserList = new JSONObject();
     private static String from;
     private static String to;
     private static String content;
+    private static String v_ticket="";//好友验证通过时需要发送给服务器的ticket
+    private static String friendId;//好友验证时候返回得到的好友ID
     private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式;
 //    private static String userAvatar;
 
     //按钮
-    private static JButton jButton_0 = new JButton("查看好友列表");
-    private static JButton jButton_1 = new JButton("确认发送");
-    private static JButton jButton_2 = new JButton("点击后消息更新");
+    private static JButton jButton_0 = new JButton("自动添加好友/关闭该功能");
+    private static JButton jButton_1 = new JButton("结束/开始收取群信息");
+    private static JButton jButton_2 = new JButton("开启/关闭关键字自动回复");
     private static JButton jButton_3 = new JButton("发送指定消息到某人或某个群");
     private static JPanel jPanel = new JPanel();
     private static JMenuBar jMenuBar = new JMenuBar();
@@ -111,6 +120,34 @@ public class Main extends JFrame {
         return httpRequest.header("Cookie",header)
                 .send(js.toString()).body();
     }
+    //读取公开回复和私密回复
+    private void readFiles()throws Exception{
+        String  s[]=null;
+        File public_file = new File("公开.txt");
+        File private_file = new File("私密.txt");
+        if(!public_file.exists()){
+            public_file.createNewFile();
+        }
+        if(!private_file.exists()){
+            private_file.createNewFile();
+        }
+        Scanner sc1 = new Scanner(public_file);
+        while(sc1.hasNextLine()){
+            s=sc1.nextLine().split("--");
+            if(s.length==2)
+            publicReply.put(s[0],s[1]);
+            else
+                System.out.println("publicfileReadError");
+        }
+        Scanner sc2 = new Scanner(private_file);
+        while(sc2.hasNextLine()){
+            s = sc2.nextLine().split("--");
+            if(s.length==2)
+                privateReply.put(s[0],s[1]);
+            else
+                System.out.println("privatefileReadError");
+        }
+    }
 
     //生成DiviceID
     private String produceDevID(){
@@ -145,12 +182,30 @@ public class Main extends JFrame {
             }
         }
     }
+    //自动验证好友
+    private void addFriend() throws Exception{
+        url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxverifyuser?r="+System.currentTimeMillis()+"&lang=zh_CN&pass_ticket="+pass_ticket;
+        js.clear();
+        js.put("BaseRequest",baseRequest);
+        js.put("Opcode",3);
+        js.put("VerifyUserListSize",1);
+        verifyUserList.put("Value",friendId);
+        verifyUserList.put("VerifyUserTicket",v_ticket);
+        js.put("VerifyUserList",verifyUserList);
+        js.put("VerifyContent","");
+        js.put("SceneListCount",1);
+        js.put("SceneList",33);
+        js.put("skey", URLDecoder.decode(skey,"utf-8"));
+        this.sendPostRequest(url,js,header);
+        v_ticket="";
+
+    }
     //检查消息更新
     private void checkMsg() throws Exception{
+        this.readFiles();
         Long r = System.currentTimeMillis();
         url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?r=" + r + "&skey=" + skey + "&sid=" + wxsid + "&uin=" + wxuin + "&deviceid=" + DeviceID + "&synckey=" + syncKeyList.toString() + "&_=" + timeStamp;
         httpRequest = HttpRequest.get(url);
-        String id="";
         String s = httpRequest.header("Cookie", header).body();
         if (s.contains("2")) {
             //获取最新消息
@@ -171,10 +226,14 @@ public class Main extends JFrame {
                     from = jsonObject1.getString("FromUserName");
                     to = jsonObject1.getString("ToUserName");
                     content = jsonObject1.getString("Content");
+                    JSONObject jsonObject2 = jsonObject1.getJSONObject("RecommendInfo");
+                    v_ticket = jsonObject2.getString("Ticket");
+                    friendId = jsonObject2.getString("UserName");
                     //对消息进行分析并记录显示
-                    if (!from.equals(to)&&from.contains("@@")) {
+                    if (!from.equals(to)&&from.contains("@@")&&v_ticket.equals("")) {
                         for (int j = 0; j < groupInfoList.size(); j++) {
                             if(from.equals(groupInfoList.get(j).getGroupID())){
+                                groupID = from;
                                 from = groupInfoList.get(j).getGroupName();
                                 String temp[] = content.split(":");
                                 to = temp[0];
@@ -182,6 +241,7 @@ public class Main extends JFrame {
                                     content = temp[1].replace("<br/>","");
                                 for(int k = 0;k<groupInfoList.get(j).getGroup().size();k++){
                                     if(to.equals(groupInfoList.get(j).getGroup().get(k).getUserId())){
+                                        memberID = to;
                                         to = groupInfoList.get(j).getGroup().get(k).getNickName();
                                     }
                                 }
@@ -190,6 +250,31 @@ public class Main extends JFrame {
                         }
                         if(content.startsWith("&lt"))
                             content = "[会话]";
+                        if(!groupID.equals("")&&!content.equals("[会话]"))
+                        {
+                            Iterator iterator = publicReply.entrySet().iterator();
+                            while(iterator.hasNext()){
+                                Map.Entry entry = (Map.Entry)iterator.next();
+                                String key = entry.getKey().toString();
+                                String value = entry.getValue().toString();
+                                if(content.contains(key)) {
+                                    this.replayMsg(value, groupID);
+                                    jTextArea.append(df.format(new Date()) + "\n我对" + from + "说:" + value + "\n");
+                                    jTextArea.paintImmediately(jTextArea.getBounds());
+                                }
+                            }
+                            iterator = privateReply.entrySet().iterator();
+                            while(iterator.hasNext()){
+                                Map.Entry entry = (Map.Entry)iterator.next();
+                                String key = entry.getKey().toString();
+                                String value = entry.getValue().toString();
+                                if(content.contains(key)) {
+                                    this.replayMsg(value, memberID);
+                                    jTextArea.append(df.format(new Date()) + "\n我对" + from + "说:" + value + "\n");
+                                    jTextArea.paintImmediately(jTextArea.getBounds());
+                                }
+                            }
+                        }
                         jTextArea.append(df.format(new Date()) + "\n" + from + " 群中 "+ to +" 说:" + content + "\n");
                         jTextArea.paintImmediately(jTextArea.getBounds());
                         if(jScrollPane.getHeight()<=700) {
@@ -197,12 +282,12 @@ public class Main extends JFrame {
                             jPanel.repaint();
                         }
                     }
-                    else if(!from.equals(to)&&from.contains("@")) {
+                    else if(!from.equals(to)&&from.contains("@")&&v_ticket.equals("")) {
                         if (from.equals(userID))
                             from = "我";
                         else for (int j = 0; j < userInfoList.size(); j++)
                             if (from.equals(userInfoList.get(j).getUserId())) {
-                                id = from;
+                                memberID = from;
                                 from = userInfoList.get(j).getNickName();
                                 break;
                             }
@@ -224,12 +309,11 @@ public class Main extends JFrame {
                             }
                         if(content.startsWith("&lt"))
                             content = "[会话]";
+//                        if(!memberID.equals("")){
+//                            this.replayMsg("啊卧是我的好女儿",memberID);
+//                        }
                         jTextArea.append(df.format(new Date())+"\n"+from+"对"+to+"说:"+content+"\n");
                         jTextArea.paintImmediately(jTextArea.getBounds());
-                        if(id!="")
-                        {this.replayMsg("hello,"+from,id);
-                            jTextArea.append(df.format(new Date())+"\n我对"+from+"说:"+"hello,"+from+"\n");
-                            jTextArea.paintImmediately(jTextArea.getBounds());}
                         if(jScrollPane.getHeight()<=700) {
                             jPanel.validate();
                             jPanel.repaint();
@@ -239,7 +323,7 @@ public class Main extends JFrame {
             }
         }
     }
-    //回复消息
+    //关键词回复，公开的词收录在公开.txt中，私密的词收录在私密.txt中
     private void replayMsg(String s,String id) throws Exception{
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket="+pass_ticket;
         js.clear();
@@ -325,11 +409,6 @@ public class Main extends JFrame {
                 unactiveGroupId.add(jsonObject.getString("UserName"));
 
         }
-//        for(int i = 0;i<userInfoList.size();i++) {
-//            jTextArea.append(i+" :用户ID: "+userInfoList.get(i).getUserId()+"\n");
-//            jTextArea.append("   昵称: "+userInfoList.get(i).getNickName()+"\n");
-//            jTextArea.append("  签名： "+userInfoList.get(i).getSignature()+"\n");
-//        }
 
     }
 
@@ -371,7 +450,6 @@ public class Main extends JFrame {
         baseRequest.put("DeviceID",DeviceID.toString());
         js.put("BaseRequest",baseRequest);
         String s = this.sendPostRequest(url,js,header);
-
         //转化并获取第一次的SyncKey中的key和val
         this.syncKeyTransfer(s);
 
@@ -400,11 +478,6 @@ public class Main extends JFrame {
         js.put("ToUserName",userID);
         js.put("ClientMsgId", Long.valueOf(timeStamp));
         this.sendPostRequest(url,js,header);
-//        this.remove(jLabel_0);
-//        this.add(jButton_0);
-//        this.add(jButton_1);
-//        this.add(jButton_2);
-//        this.add(jButton_3);
     }
 
     //获取群列表(ChatRoomID)
@@ -429,6 +502,7 @@ public class Main extends JFrame {
         }
         js.put("List",groupJs);
         String s = this.sendPostRequest(url,js);
+//        System.out.println(s);
         JSONObject jsonObject = JSONObject.fromObject(s);
 //        int count = jsonObject.getInt("Count");
 //        jTextArea.append("共有"+count+"个群:\n");
@@ -488,7 +562,6 @@ public class Main extends JFrame {
     private void exitWeChat()throws Exception{
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxlogout?redirect=1&type=0&skey="+skey;
         String s = httpRequest.post(url).header("Cookie",header).send("sid="+URLEncoder.encode(wxsid,"utf-8")+"&uin="+wxuin).body();
-        System.out.println(s);
     }
 
     /**
@@ -536,12 +609,18 @@ public class Main extends JFrame {
         htmlUnit.initWeChat();
         htmlUnit.getList();
         htmlUnit.getRecentList();
+        final Thread t1 = new Thread(htmlUnit);
+        t1.setPriority(Thread.MAX_PRIORITY);
+        t1.start();
+        final Thread t2 = new Thread(htmlUnit);
+        t2.setPriority(Thread.MAX_PRIORITY);
+        t2.start();
         SwingUtilities.invokeAndWait(new Runnable() {
             @Override
             public void run() {
                 jPanel.remove(jLabel_0);
-//        this.add(jButton_0);
-//       jPanel.add(jButton_1);
+                jPanel.add(jButton_0);
+                jPanel.add(jButton_1);
 //                jPanel.add(jButton_2);
 //        jPanel.add(jButton_3);
                 jScrollPane = new JScrollPane(jTextArea);
@@ -554,30 +633,38 @@ public class Main extends JFrame {
                 jPanel.add(jScrollPane);
                 jPanel.validate();
                 jPanel.repaint();
-//                jButton_1.addActionListener(new ActionListener() {
-//                    @Override
-//                    public void actionPerformed(ActionEvent e) {
-//                        try{
-//                            htmlUnit.exitWeChat();
-//                        }catch (Exception e1){
-//                            e1.printStackTrace();
-//                        }
-//                    }
-//
-//                });
+                jButton_1.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        try{
+                            if(!flag) {
+                                flag = true;
+                            }
+                            else {
+                                flag = false;
+                            }
+                        }catch (Exception e1){
+                            e1.printStackTrace();
+                        }
+                    }
+
+                });
             }
         });
 
-//        jButton_2.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                try{
-//
-//                }catch (Exception e2){
-//                    e2.printStackTrace();
-//                }
-//            }
-//        });
+        jButton_0.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try{
+                    if(flag1)
+                        flag1=false;
+                    else
+                        flag1 = true;
+                }catch (Exception e2){
+                    e2.printStackTrace();
+                }
+            }
+        });
 //        jButton_3.addActionListener(new ActionListener() {
 //            @Override
 //            public void actionPerformed(ActionEvent e) {
@@ -622,11 +709,11 @@ public class Main extends JFrame {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                  try{
-                      htmlUnit.exitWeChat();
-                  }catch (Exception e1){
-                      e1.printStackTrace();
-                  }
+                try{
+                    htmlUnit.exitWeChat();
+                }catch (Exception e1){
+                    e1.printStackTrace();
+                }
             }
 
             @Override
@@ -658,13 +745,29 @@ public class Main extends JFrame {
 
             }
         });
-        while(true){
-            try{
-                htmlUnit.checkMsg();
-            }catch (Exception e2){
-                e2.printStackTrace();
-            }
-        }
 
+
+
+    }
+
+    @Override
+    public void run() {
+        while(true){
+            if(this.flag) {
+                try {
+                    this.checkMsg();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            if(this.flag1&&!v_ticket.equals("")){
+                try {
+                    this.addFriend();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+//            System.out.print(flag);
+        }
     }
 }
