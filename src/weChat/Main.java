@@ -28,8 +28,10 @@ import javax.swing.*;
 
 public class Main extends JFrame implements Runnable{
     private static HttpRequest httpRequest;
-    private static Boolean flag = true;
-    private static Boolean flag1 = true;
+    private static Boolean flag = true;//控制是否实时记录群消息
+    private static Boolean flag1 = true;//控制是否自动通过验证
+    private static Boolean flag2 = true;//控制是否开启关键词自动回复
+    private static Boolean flag3 = true;//控制是否开启过敏词警告
     private static String url;
     private static String timeStamp;
     private static String uuid;
@@ -48,15 +50,16 @@ public class Main extends JFrame implements Runnable{
     private static List<GroupInfo> groupInfoList = new ArrayList<>();//存放群信息
     private static Map<String,String> publicReply = new HashMap<>();//存放公开关键词回复
     private static Map<String,String> privateReply = new HashMap<>();//存放私密关键词回复
+    private static List<String> senseReply = new ArrayList<>();//存放敏感词
     private static JSONObject syncKey;
     private static StringBuffer syncKeyList = new StringBuffer();
-    private static String header;
-    private static String host;
-    private static JSONObject baseRequest = new JSONObject();
-    private static JSONObject verifyUserList = new JSONObject();
-    private static String from;
-    private static String to;
-    private static String content;
+    private static String header;//存放请求头
+    private static String host;//存放请求的http请求的host
+    private static JSONObject baseRequest = new JSONObject();//存放baseRequest这个json数据
+    private static JSONObject verifyUserList = new JSONObject();//存放VerifyUserList这个json数据
+    private static String from;//存放消息的发送方ID
+    private static String to;//存放消息的收取方ID
+    private static String content;//存放消息本体
     private static String v_ticket="";//好友验证通过时需要发送给服务器的ticket
     private static String friendId;//好友验证时候返回得到的好友ID
     private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式;
@@ -65,8 +68,8 @@ public class Main extends JFrame implements Runnable{
     //按钮
     private static JButton jButton_0 = new JButton("自动添加好友/关闭该功能");
     private static JButton jButton_1 = new JButton("结束/开始收取群信息");
-    private static JButton jButton_2 = new JButton("开启/关闭关键字自动回复");
-    private static JButton jButton_3 = new JButton("发送指定消息到某人或某个群");
+    private static JButton jButton_2 = new JButton("关闭/开启关键字自动回复");
+    private static JButton jButton_3 = new JButton("关闭/开启敏感词警告");
     private static JPanel jPanel = new JPanel();
     private static JMenuBar jMenuBar = new JMenuBar();
     private static JScrollPane jScrollPane;
@@ -120,32 +123,40 @@ public class Main extends JFrame implements Runnable{
         return httpRequest.header("Cookie",header)
                 .send(js.toString()).body();
     }
-    //读取公开回复和私密回复
+    //读取公开回复和私密回复,以及读取敏感词库
     private void readFiles()throws Exception{
         String  s[]=null;
         File public_file = new File("公开.txt");
         File private_file = new File("私密.txt");
+        File sense_file = new File("敏感词.txt");
         if(!public_file.exists()){
             public_file.createNewFile();
         }
         if(!private_file.exists()){
             private_file.createNewFile();
         }
-        Scanner sc1 = new Scanner(public_file);
-        while(sc1.hasNextLine()){
-            s=sc1.nextLine().split("--");
+        if(!sense_file.exists()){
+            sense_file.createNewFile();
+        }
+        Scanner sc = new Scanner(public_file);
+        while(sc.hasNextLine()){
+            s=sc.nextLine().split("--");
             if(s.length==2)
             publicReply.put(s[0],s[1]);
             else
-                System.out.println("publicfileReadError");
+                System.out.println("读取公开回复文件错误");
         }
-        Scanner sc2 = new Scanner(private_file);
-        while(sc2.hasNextLine()){
-            s = sc2.nextLine().split("--");
+        sc= new Scanner(private_file);
+        while(sc.hasNextLine()){
+            s = sc.nextLine().split("--");
             if(s.length==2)
                 privateReply.put(s[0],s[1]);
             else
-                System.out.println("privatefileReadError");
+                System.out.println("读取私密回复文件错误");
+        }
+        sc = new Scanner(sense_file);
+        while(sc.hasNextLine()){
+            senseReply.add(sc.nextLine());
         }
     }
 
@@ -250,7 +261,9 @@ public class Main extends JFrame implements Runnable{
                         }
                         if(content.startsWith("&lt"))
                             content = "[会话]";
-                        if(!groupID.equals("")&&!content.equals("[会话]"))
+                        jTextArea.append(df.format(new Date()) + "\n" + from + " 群中 "+ to +" 说:" + content + "\n");
+                        jTextArea.paintImmediately(jTextArea.getBounds());
+                        if(!groupID.equals("")&&!content.equals("[会话]")&&flag2)
                         {
                             Iterator iterator = publicReply.entrySet().iterator();
                             while(iterator.hasNext()){
@@ -261,6 +274,7 @@ public class Main extends JFrame implements Runnable{
                                     this.replayMsg(value, groupID);
                                     jTextArea.append(df.format(new Date()) + "\n我对" + from + "说:" + value + "\n");
                                     jTextArea.paintImmediately(jTextArea.getBounds());
+                                    break;
                                 }
                             }
                             iterator = privateReply.entrySet().iterator();
@@ -272,11 +286,19 @@ public class Main extends JFrame implements Runnable{
                                     this.replayMsg(value, memberID);
                                     jTextArea.append(df.format(new Date()) + "\n我对" + from + "说:" + value + "\n");
                                     jTextArea.paintImmediately(jTextArea.getBounds());
+                                    break;
                                 }
                             }
                         }
-                        jTextArea.append(df.format(new Date()) + "\n" + from + " 群中 "+ to +" 说:" + content + "\n");
-                        jTextArea.paintImmediately(jTextArea.getBounds());
+                        if(!groupID.equals("")&&!content.equals("[会话]")&&flag3){
+                            for(int index = 0;index<senseReply.size();index++){
+                                if(content.contains(senseReply.get(index))){
+                                    this.replayMsg("您的言语有不当之处，警告一次",memberID);
+                                    break;
+                                }
+                            }
+                        }
+
                         if(jScrollPane.getHeight()<=700) {
                             jPanel.validate();
                             jPanel.repaint();
@@ -621,7 +643,7 @@ public class Main extends JFrame implements Runnable{
                 jPanel.remove(jLabel_0);
                 jPanel.add(jButton_0);
                 jPanel.add(jButton_1);
-//                jPanel.add(jButton_2);
+                jPanel.add(jButton_2);
 //        jPanel.add(jButton_3);
                 jScrollPane = new JScrollPane(jTextArea);
                 jTextArea.setText("您已登录成功，开始进行实时消息记录!\n");
@@ -665,42 +687,25 @@ public class Main extends JFrame implements Runnable{
                 }
             }
         });
-//        jButton_3.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                jPanel.add(jButton_1);
-//                jPanel.add(jTextArea1);
-//                jPanel.add(jTextArea2);
-//                jTextArea1.setText("");
-//                jTextArea2.setText("");
-//                jPanel.validate();
-//                jPanel.repaint();
-//                jTextArea.append("请在左边文本框输入群名称或好友名称，右边输入文本信息\n");
-//            }
-//        });
-//        jButton_1.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                try{
-//                    htmlUnit.sendMsg();
-//                    jTextArea2.setText("");
-//                }catch (Exception e1){
-//                    e1.printStackTrace();
-//                }
-//            }
-//        });
-//        Thread thread= new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                while(flag){
-//                    try{
-//                        htmlUnit.checkMsg();
-//                    }catch (Exception e2){
-//                        e2.printStackTrace();
-//                    }
-//                }
-//            }
-//        });
+        jButton_3.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(flag3)
+                    flag3=false;
+                else
+                    flag3=true;
+            }
+        });
+        jButton_2.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(flag2)
+                    flag2=false;
+                else
+                    flag2=true;
+            }
+        });
+
         htmlUnit.addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {
