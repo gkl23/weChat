@@ -1,4 +1,4 @@
-package weChat;
+package Models;
 
 /**
  * Created by huzhejie on 2016/7/19.

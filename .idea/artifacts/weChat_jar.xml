@@ -1,10 +1,11 @@
 <component name="ArtifactManager">
-  <artifact build-on-make="true" name="weChat:jar">
+  <artifact name="weChat:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/weChat_jar</output-path>
     <root id="root">
       <element id="archive" name="weChat.jar">
         <element id="module-output" name="weChat" />
       </element>
+      <element id="library" level="project" name="library" />
     </root>
   </artifact>
 </component>

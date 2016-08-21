@@ -9,29 +9,41 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
+import Models.GroupInfo;
+import Models.TipRecord;
+import Models.UserInfo;
+import Utils.Aes;
+import Utils.Md5;
 import blade.kit.http.HttpRequest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.text.Document;
 
 
-public class Main extends JFrame implements Runnable{
+public class Main{
+    private static Thread mainThread;
     private static HttpRequest httpRequest;
-    private static Boolean flag = true;//控制是否实时记录群消息
-    private static Boolean flag1 = true;//控制是否自动通过验证
-    private static Boolean flag2 = true;//控制是否开启关键词自动回复
-    private static Boolean flag3 = true;//控制是否开启过敏词警告
+    private static Boolean statusNotifyFlag = false;
+    private static Boolean updatePic = false;
+    private static volatile Boolean flag = false;
+    private static volatile Boolean flag1 = false;
+    private static Boolean flag2 = true;
+    private static Boolean flag3 = true;
+    private static volatile Boolean flag4 = false;
+    private static Boolean flag5 = false;
     private static String url;
     private static String timeStamp;
     private static String uuid;
@@ -42,66 +54,52 @@ public class Main extends JFrame implements Runnable{
     private static String DeviceID;
     private static JSONObject js;
     private static String userID="";
+    private static String userName="";
     private static String memberID="";
     private static String groupID="";
-    private static List<String> activeGroupId = new ArrayList<>();//存放最近活跃的群id
-    private static List<String> unactiveGroupId = new ArrayList<>();//存放最近不活跃的群id
-    private static List<UserInfo> userInfoList = new ArrayList<>();//存放用户好友及订阅号，公众号信息
-    private static List<GroupInfo> groupInfoList = new ArrayList<>();//存放群信息
-    private static Map<String,String> publicReply = new HashMap<>();//存放公开关键词回复
-    private static Map<String,String> privateReply = new HashMap<>();//存放私密关键词回复
-    private static List<String> senseReply = new ArrayList<>();//存放敏感词
+    private static String tipGroupID="";
+    private static String msgType="";
+    private static String msgID="";
+    private static List<String> activeGroupId = new ArrayList<>();
+    private static List<String> unactiveGroupId = new ArrayList<>();
+    private static List<String> recordList = new ArrayList<>();
+    private static List<UserInfo> userInfoList = new ArrayList<>();
+    private static List<GroupInfo> groupInfoList = new ArrayList<>();
+    private static Map<String,String> publicReply = new HashMap<>();
+    private static Map<String,String> privateReply = new HashMap<>();
+    private static List<String> senseReply = new ArrayList<>();
     private static JSONObject syncKey;
     private static StringBuffer syncKeyList = new StringBuffer();
-    private static String header;//存放请求头
-    private static String host;//存放请求的http请求的host
-    private static JSONObject baseRequest = new JSONObject();//存放baseRequest这个json数据
-    private static JSONObject verifyUserList = new JSONObject();//存放VerifyUserList这个json数据
-    private static String from;//存放消息的发送方ID
-    private static String to;//存放消息的收取方ID
-    private static String content;//存放消息本体
-    private static String v_ticket="";//好友验证通过时需要发送给服务器的ticket
-    private static String friendId;//好友验证时候返回得到的好友ID
-    private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式;
+    private static String header;
+    private static String host;
+    private static JSONObject baseRequest = new JSONObject();
+    private static JSONObject verifyUserList = new JSONObject();
+    private static String from;
+    private static String to;
+    private static String content;
+    private static String v_ticket="";
+    private static String friendId;
+    private static String invitedUserID="";
+    private static String invitedGroupID="";
+    private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static List<TipRecord> tipRecordList = new ArrayList<>();
+    private static Document doc;
 //    private static String userAvatar;
 
-    //按钮
-    private static JButton jButton_0 = new JButton("自动添加好友/关闭该功能");
-    private static JButton jButton_1 = new JButton("结束/开始收取群信息");
-    private static JButton jButton_2 = new JButton("关闭/开启关键字自动回复");
-    private static JButton jButton_3 = new JButton("关闭/开启敏感词警告");
-    private static JPanel jPanel = new JPanel();
-    private static JMenuBar jMenuBar = new JMenuBar();
-    private static JScrollPane jScrollPane;
-    private static JLabel jLabel_0;
-    private static JTextArea jTextArea = new JTextArea();
-    private static JTextArea jTextArea1 = new JTextArea();
-    private static JTextArea jTextArea2 = new JTextArea();
-
+    private static WindowUI windowUI;
     public Main() {
-        setLocation(Toolkit.getDefaultToolkit().getScreenSize().width/2-350,Toolkit.getDefaultToolkit().getScreenSize().height/2-400);
-        setVisible(false);
-        setResizable(false);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(700,800);
-        add(jPanel);
-        jPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        jPanel.setSize(700,800);
-        jButton_0.setSize(100,100);
-        jButton_1.setSize(100,100);
-        jButton_2.setSize(100,100);
-        jButton_3.setSize(100,100);
-        jTextArea.setLineWrap(true);
-        jTextArea1.setLineWrap(true);
-        jTextArea2.setLineWrap(true);
-        jTextArea.setEditable(false);
-        jTextArea1.setEditable(true);
-        jTextArea2.setEditable(true);
-        jTextArea1.setSize(100,100);
-        jTextArea2.setSize(300,100);
-        setJMenuBar(jMenuBar);
+        windowUI = new WindowUI();
+        doc = windowUI.getjTextPane().getDocument();
+        try{
+            doc.insertString(doc.getLength(),"您已登陆成功，开始记录消息!\n",windowUI.getAttributeSet());
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
+    public static List<TipRecord> getTipRecordList() {
+        return tipRecordList;
+    }
 
     private String sendGetRequest(String url) throws Exception {
         httpRequest =HttpRequest.get(url);
@@ -123,7 +121,90 @@ public class Main extends JFrame implements Runnable{
         return httpRequest.header("Cookie",header)
                 .send(js.toString()).body();
     }
-    //读取公开回复和私密回复,以及读取敏感词库
+    private String aiChat(String content, String userId) {
+        final String apiUrl = "http://www.tuling123.com/openapi/api"; // ????????api????
+        final String apiKey = "49d5dd04005a4d82b7d5bc30dae96821"; // ????????????apikey
+        final String secretKey = "02a06d8364d4ef9a"; // ????????key
+        final String timeStamp = System.currentTimeMillis() + "";
+
+        // ???????
+        String key = Md5.MD5(secretKey + timeStamp + apiKey);
+
+        // ????????????м???
+        JSONObject chatData = new JSONObject();
+        chatData.put("key", apiKey);
+        chatData.put("info", content);
+        chatData.put("userid", userId);
+        String encryptChatData = new Aes(key).encrypt(chatData.toString());
+
+        // ????????
+        OutputStreamWriter outWriter = null;
+        BufferedReader inReader = null;
+        StringBuilder response = new StringBuilder("");
+        final int timeOut = 50 * 1000; // ?????????????50s
+        try {
+
+            // ??????????Щ???????????????
+            HttpURLConnection request = (HttpURLConnection) new URL(apiUrl).openConnection();
+            request.setDoOutput(true);
+            request.setDoInput(true);
+            request.setUseCaches(false);
+            request.setRequestMethod("POST");
+            request.setConnectTimeout(timeOut);
+            request.setReadTimeout(timeOut);
+            request.setRequestProperty("Content-Type", "application/json");
+            request.setRequestProperty("Accept", "application/json");
+            request.setRequestProperty("Autherization", "token");
+            request.connect();
+
+
+            outWriter = new OutputStreamWriter(request.getOutputStream(), "UTF-8");
+            JSONObject requestData = new JSONObject();
+            requestData.put("key", apiKey);
+            requestData.put("timestamp", timeStamp);
+            requestData.put("data", encryptChatData);
+            outWriter.write(requestData.toString());
+            outWriter.flush();
+            outWriter.close();
+
+            // ???????????????
+            inReader = new BufferedReader(new InputStreamReader(request.getInputStream(), "UTF-8"));
+            String line;
+            while ((line = inReader.readLine()) != null)
+                response.append(line);
+            // System.out.println(response);
+
+            // ????????????????????????
+            JSONObject responseJson = JSONObject.fromObject(response.toString());
+            response.delete(0, response.length());
+            int code = responseJson.getInt("code");
+            String text = responseJson.getString("text"); // ???????????????????????
+            switch (code) {
+                case 100000: // ??????
+                    response.append(text);
+                    break;
+                case 200000: // ???????
+                    response.append("该功能暂时不开放");
+                    break;
+                case 302000: // ???????
+                    response.append("该功能暂时不开放");
+                    break;
+                case 308000: // ???????
+                    response.append("该功能暂时不开放");
+                    break;
+                default:
+                    System.out.println(text);
+                    response.append("API密钥有错误");
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.append("出错，请稍后再试");
+        }
+
+        return response.toString();
+    }
+    //读取文件
     private void readFiles()throws Exception{
         String  s[]=null;
         File public_file = new File("公开.txt");
@@ -142,17 +223,13 @@ public class Main extends JFrame implements Runnable{
         while(sc.hasNextLine()){
             s=sc.nextLine().split("--");
             if(s.length==2)
-            publicReply.put(s[0],s[1]);
-            else
-                System.out.println("读取公开回复文件错误");
+                publicReply.put(s[0],s[1]);
         }
         sc= new Scanner(private_file);
         while(sc.hasNextLine()){
             s = sc.nextLine().split("--");
             if(s.length==2)
                 privateReply.put(s[0],s[1]);
-            else
-                System.out.println("读取私密回复文件错误");
         }
         sc = new Scanner(sense_file);
         while(sc.hasNextLine()){
@@ -163,22 +240,22 @@ public class Main extends JFrame implements Runnable{
     //生成DiviceID
     private String produceDevID(){
         Random rm = new Random();
-        // 获得随机数
+
         double pross = (1 + rm.nextDouble()) * Math.pow(10, 16);
-        // 将获得的获得随机数转化为字符串
+
         String fixLenthString = String.valueOf(pross);
-        // 返回固定的长度的随机数
+
         return fixLenthString.substring(1, 16 + 1);
     }
 
 
-    //生成二维码的url
+    //生成二维码url
     private String produceErWei(String s){
         s = "http://login.weixin.qq.com/qrcode/"+s;
         return s;
     }
 
-    //SyncKey的转化
+    //SyncKey转换
     private void syncKeyTransfer(String s){
         JSONObject fr = JSONObject.fromObject(s);
         syncKey = fr.getJSONObject("SyncKey");
@@ -193,7 +270,7 @@ public class Main extends JFrame implements Runnable{
             }
         }
     }
-    //自动验证好友
+    //自动添加好友
     private void addFriend() throws Exception{
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxverifyuser?r="+System.currentTimeMillis()+"&lang=zh_CN&pass_ticket="+pass_ticket;
         js.clear();
@@ -206,20 +283,19 @@ public class Main extends JFrame implements Runnable{
         js.put("VerifyContent","");
         js.put("SceneListCount",1);
         js.put("SceneList",33);
-        js.put("skey", URLDecoder.decode(skey,"utf-8"));
+        js.put("skey",skey);
         this.sendPostRequest(url,js,header);
         v_ticket="";
 
     }
     //检查消息更新
     private void checkMsg() throws Exception{
-        this.readFiles();
         Long r = System.currentTimeMillis();
         url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?r=" + r + "&skey=" + skey + "&sid=" + wxsid + "&uin=" + wxuin + "&deviceid=" + DeviceID + "&synckey=" + syncKeyList.toString() + "&_=" + timeStamp;
         httpRequest = HttpRequest.get(url);
         String s = httpRequest.header("Cookie", header).body();
         if (s.contains("2")) {
-            //获取最新消息
+            //检查最新消息
             url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxsync?sid=" + wxsid + "&skey=" + skey + "&lang=zh_CN&pass_ticket=" + pass_ticket;
             js.clear();
             js.put("BaseRequest", baseRequest);
@@ -237,32 +313,60 @@ public class Main extends JFrame implements Runnable{
                     from = jsonObject1.getString("FromUserName");
                     to = jsonObject1.getString("ToUserName");
                     content = jsonObject1.getString("Content");
+                    msgType = String.valueOf(jsonObject1.getInt("MsgType"));
+                    msgID = jsonObject1.getString("NewMsgId");
                     JSONObject jsonObject2 = jsonObject1.getJSONObject("RecommendInfo");
                     v_ticket = jsonObject2.getString("Ticket");
                     friendId = jsonObject2.getString("UserName");
-                    //对消息进行分析并记录显示
+                    //statusNotify
+                    if(from.equals(to)&&from.equals(userID)){
+                        String groupid = jsonObject1.getString("StatusNotifyUserName");
+                        String id[] = groupid.split(",");
+                        for(int j = 0;j<id.length;j++){
+                            if(id[j].contains("@@")&&!unactiveGroupId.contains(id[j])&&!activeGroupId.contains(id[j]))
+                                unactiveGroupId.add(id[j]);
+                        }
+                        statusNotifyFlag = true;
+                        continue;
+                    }
                     if (!from.equals(to)&&from.contains("@@")&&v_ticket.equals("")) {
-                        for (int j = 0; j < groupInfoList.size(); j++) {
-                            if(from.equals(groupInfoList.get(j).getGroupID())){
+                        int j = 0;
+                        for (; j < groupInfoList.size(); j++) {
+                            if(from.equals(groupInfoList.get(j).getGroupID())&&groupInfoList.get(j).getFlag()){
                                 groupID = from;
                                 from = groupInfoList.get(j).getGroupName();
                                 String temp[] = content.split(":");
                                 to = temp[0];
                                 if(content.contains(":"))
                                     content = temp[1].replace("<br/>","");
+                                if(content.startsWith("&lt")&&msgType.equals("1"))
+                                    content = "[会话]";
                                 for(int k = 0;k<groupInfoList.get(j).getGroup().size();k++){
                                     if(to.equals(groupInfoList.get(j).getGroup().get(k).getUserId())){
                                         memberID = to;
                                         to = groupInfoList.get(j).getGroup().get(k).getNickName();
                                     }
                                 }
+                                doc.insertString(doc.getLength(),df.format(new Date()) + "\n" + from + " 群中 "+ to +" 说:" + content + "\n",windowUI.getAttributeSet());
+                                windowUI.getjTextPane().paintImmediately(windowUI.getjTextPane().getBounds());
+                                recordList.add(df.format(new Date()) + "," + from + ","+ to +"," + content);
                                 break;
                             }
                         }
-                        if(content.startsWith("&lt"))
-                            content = "[会话]";
-                        jTextArea.append(df.format(new Date()) + "\n" + from + " 群中 "+ to +" 说:" + content + "\n");
-                        jTextArea.paintImmediately(jTextArea.getBounds());
+                        //图片消息
+                        if(msgType.equals("3")){
+                            url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID="+msgID+"&skey="+skey+"&type=slave";
+                            ImageIcon image = new ImageIcon(httpRequest.get(url).bytes());
+                            windowUI.getjTextPane().setCaretPosition(doc.getLength());
+                            windowUI.getjTextPane().insertIcon(image);
+                            doc.insertString(doc.getLength(),"\n",windowUI.getAttributeSet());
+                            windowUI.getjTextPane().paintImmediately(windowUI.getjTextPane().getBounds());
+                        }
+                        //图灵机器人智能聊天
+                        if(!groupID.equals("")&&!content.equals("[会话]")&&flag5){
+                            this.replayMsg(this.aiChat(content,userID),groupID);
+                        }
+                        //关键词回复
                         if(!groupID.equals("")&&!content.equals("[会话]")&&flag2)
                         {
                             Iterator iterator = publicReply.entrySet().iterator();
@@ -272,8 +376,9 @@ public class Main extends JFrame implements Runnable{
                                 String value = entry.getValue().toString();
                                 if(content.contains(key)) {
                                     this.replayMsg(value, groupID);
-                                    jTextArea.append(df.format(new Date()) + "\n我对" + from + "说:" + value + "\n");
-                                    jTextArea.paintImmediately(jTextArea.getBounds());
+                                    doc.insertString(doc.getLength(),df.format(new Date()) + "\n我对" + from + "说:" + value + "\n",windowUI.getAttributeSet());
+                                    windowUI.getjTextPane().paintImmediately(windowUI.getjTextPane().getBounds());
+                                    recordList.add(df.format(new Date()) +from+",我,"+ value);
                                     break;
                                 }
                             }
@@ -284,24 +389,26 @@ public class Main extends JFrame implements Runnable{
                                 String value = entry.getValue().toString();
                                 if(content.contains(key)) {
                                     this.replayMsg(value, memberID);
-                                    jTextArea.append(df.format(new Date()) + "\n我对" + from + "说:" + value + "\n");
-                                    jTextArea.paintImmediately(jTextArea.getBounds());
+                                    doc.insertString(doc.getLength(),df.format(new Date()) + "\n我对" + from + "说:" + value + "\n",windowUI.getAttributeSet());
+                                    windowUI.getjTextPane().paintImmediately(windowUI.getjTextPane().getBounds());
+                                    recordList.add(df.format(new Date()) +",我,"+from+","+ value);
                                     break;
                                 }
                             }
                         }
+                        //敏感词警告
                         if(!groupID.equals("")&&!content.equals("[会话]")&&flag3){
                             for(int index = 0;index<senseReply.size();index++){
                                 if(content.contains(senseReply.get(index))){
-                                    this.replayMsg("您的言语有不当之处，警告一次",memberID);
+                                    this.replayMsg("您言语有不当之处，警告一次",memberID);
                                     break;
                                 }
                             }
                         }
 
-                        if(jScrollPane.getHeight()<=700) {
-                            jPanel.validate();
-                            jPanel.repaint();
+                        if(windowUI.getjScrollPane().getHeight()<=400) {
+                            windowUI.getChatJPanel().validate();
+                            windowUI.getChatJPanel().repaint();
                         }
                     }
                     else if(!from.equals(to)&&from.contains("@")&&v_ticket.equals("")) {
@@ -318,34 +425,35 @@ public class Main extends JFrame implements Runnable{
                             to = "我";
                         else if(to.contains("@@"))
                             for(int j = 0;j<groupInfoList.size();j++) {
-                                if (to.equals(groupInfoList.get(j).getGroupID())) {
+                                if (to.equals(groupInfoList.get(j).getGroupID())&&groupInfoList.get(j).getFlag()) {
                                     to = groupInfoList.get(j).getGroupName()+" 群";
+                                    if(content.startsWith("&lt"))
+                                        content = "[会话]";
+                                    doc.insertString(doc.getLength(),df.format(new Date())+"\n"+from+"对"+to+"说:"+content+"\n",windowUI.getAttributeSet());
+                                    recordList.add(df.format(new Date()) + "," + from + ","+ to +"," + content);
                                     break;
                                 }
                             }
                         else for (int j = 0; j < userInfoList.size(); j++) {
                                 if (to.equals(userInfoList.get(j).getUserId())) {
                                     to = userInfoList.get(j).getNickName();
+                                    if(content.startsWith("&lt"))
+                                        content = "[会话]";
+                                    doc.insertString(doc.getLength(),df.format(new Date())+"\n"+from+"对"+to+"说:"+content+"\n",windowUI.getAttributeSet());
+                                    recordList.add(df.format(new Date()) + "," + from + ","+ to +"," + content);
                                     break;
                                 }
                             }
-                        if(content.startsWith("&lt"))
-                            content = "[会话]";
-//                        if(!memberID.equals("")){
-//                            this.replayMsg("啊卧是我的好女儿",memberID);
-//                        }
-                        jTextArea.append(df.format(new Date())+"\n"+from+"对"+to+"说:"+content+"\n");
-                        jTextArea.paintImmediately(jTextArea.getBounds());
-                        if(jScrollPane.getHeight()<=700) {
-                            jPanel.validate();
-                            jPanel.repaint();
+                        if(windowUI.getjScrollPane().getHeight()<=400) {
+                            windowUI.getChatJPanel().validate();
+                            windowUI.getChatJPanel().repaint();
                         }
                     }
                 }
             }
         }
     }
-    //关键词回复，公开的词收录在公开.txt中，私密的词收录在私密.txt中
+    //消息回复
     private void replayMsg(String s,String id) throws Exception{
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket="+pass_ticket;
         js.clear();
@@ -358,7 +466,7 @@ public class Main extends JFrame implements Runnable{
 
         //生成Msg
         msg.put("ClientMsgId",cmId);
-        msg.put("Content",s);//会话内容
+        msg.put("Content",s);//??????
         msg.put("FromUserName",userID);
         msg.put("LocalID",cmId);
         msg.put("ToUserName",id);
@@ -369,48 +477,32 @@ public class Main extends JFrame implements Runnable{
         this.sendPostRequest(url,js);
     }
 
-    //发送消息
-    private void sendMsg()throws Exception{
-        url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket="+pass_ticket;
-        js.clear();
-        js.put("BaseRequest",baseRequest);
-        JSONObject msg = new JSONObject();
-        //生成ClientMsgId
-        int r=(int)(Math.random()*9000)+1000;
-        Long ts = System.currentTimeMillis()<<4;
-        String cmId = ts.toString()+String.valueOf(r);
-
-        //生成Msg
-        msg.put("ClientMsgId",cmId);
-        msg.put("Content",jTextArea2.getText());//会话内容
-        msg.put("FromUserName",userID);
-        msg.put("LocalID",cmId);
-        String id = jTextArea1.getText();
-        //对名称进行搜索，先群后好友
-        for(int i  = 0;i<groupInfoList.size();i++){
-            GroupInfo groupInfo = groupInfoList.get(i);
-            if(groupInfo.getGroupName().equals(id)) {
-                id = groupInfo.getGroupID();
-                break;
-            }
-        }
-        for(int i = 0;i<userInfoList.size();i++){
-            UserInfo userInfo = userInfoList.get(i);
-            if(userInfo.getNickName().equals(id)){
-                id = userInfo.getUserId();
-                break;
-            }
-        }
-        msg.put("ToUserName",id);
-        msg.put("Type",1);
-
-        js.put("Msg",msg);
-        js.put("Scene",0);
-        this.sendPostRequest(url,js);
-        jTextArea.append(df.format(new Date())+"\n我对"+jTextArea1.getText()+"说:"+jTextArea2.getText()+"\n");
+    //邀请用户进群
+    private void addMember(String addUserID,String addGroupID){
+        url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("AddMemberList",addUserID);
+        jsonObject.put("BaseRequest",baseRequest);
+        jsonObject.put("ChatRoomName",addGroupID);
+        httpRequest = HttpRequest.post(url,true,"fun","addmember","pass_ticket",pass_ticket)
+                .header("Content-Type","application/json;charset=UTF-8").header("Cookie",header).send(jsonObject.toString());
+        httpRequest.body();
+        httpRequest.disconnect();
+    }
+    //将用户踢出群
+    private void deleteMember(String UserID,String GroupID){
+        url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("DelMemberList",UserID);
+        jsonObject.put("BaseRequest",baseRequest);
+        jsonObject.put("ChatRoomName",GroupID);
+        httpRequest = HttpRequest.post(url,true,"fun","delmember","pass_ticket",pass_ticket)
+                .header("Content-Type","application/json;charset=UTF-8").header("Cookie",header).send(jsonObject.toString());
+        httpRequest.body();
+        httpRequest.disconnect();
     }
 
-    //获取好友及群列表
+    //获取最近联系人列表
     private void getList(){
 //        jTextArea.setText("");
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=zh_CN&pass_ticket="+pass_ticket+"&r="+System.currentTimeMillis()+"&seq=0&skey="+skey;
@@ -427,16 +519,15 @@ public class Main extends JFrame implements Runnable{
                 userInfo.setSignature(jsonObject.getString("Signature"));
                 userInfoList.add(userInfo);
             }
-            else if(jsonObject.getString("UserName").contains("@@")&&!activeGroupId.contains(jsonObject.getString("UserName")))
+            else if(jsonObject.getString("UserName").contains("@@")&&!activeGroupId.contains(jsonObject.getString("UserName"))&&!unactiveGroupId.contains(jsonObject.getString("UserName")))
                 unactiveGroupId.add(jsonObject.getString("UserName"));
 
         }
 
     }
 
-    //生成必要的ID
+    //生成key
     private void produceKey()throws Exception{
-        //访问上一步获得到的redirect_url,获取skey,wxsid,wxuid,pass_ticket
         String s = this.sendGetRequest(url);
         List<String> l = httpRequest.getConnection().getHeaderFields().get("Set-Cookie");
         for(String s1:l){
@@ -449,14 +540,14 @@ public class Main extends JFrame implements Runnable{
         if(s.contains("<message>OK</message>")){
             skey = s.substring(s.indexOf("<skey>"),s.indexOf("</skey>"));
             skey = skey.replace("<skey>","").trim();
-            skey = URLEncoder.encode(skey,"utf-8");
+//            skey = URLEncoder.encode(skey,"gbk");
             wxsid = s.substring(s.indexOf("<wxsid>"),s.indexOf("</wxsid>"));
             wxsid = wxsid.replace("<wxsid>","").trim();
             wxuin = s.substring(s.indexOf("<wxuin>"),s.indexOf("</wxuin>"));
             wxuin = wxuin.replace("<wxuin>","").trim();
             pass_ticket = s.substring(s.indexOf("<pass_ticket>"),s.indexOf("</pass_ticket>"));
             pass_ticket = pass_ticket.replace("<pass_ticket>","").trim();
-            pass_ticket = URLEncoder.encode(pass_ticket,"utf-8");
+//            pass_ticket = URLEncoder.encode(pass_ticket,"gbk");
         }
     }
 
@@ -472,16 +563,15 @@ public class Main extends JFrame implements Runnable{
         baseRequest.put("DeviceID",DeviceID.toString());
         js.put("BaseRequest",baseRequest);
         String s = this.sendPostRequest(url,js,header);
-        //转化并获取第一次的SyncKey中的key和val
         this.syncKeyTransfer(s);
 
-        String s3[] = s.split(",");//进行第一次字符串分割
-        List<String> usrName = new ArrayList<>();//存储所有的usernameID
+        String s3[] = s.split(",");
+        List<String> usrName = new ArrayList<>();
         for(String usrname:s3){
             if(usrname.contains("UserName"))
                 usrName.add(usrname);
         }
-        //获取群ID
+        //获取一部分ID
         for(String id:usrName){
             if(id.contains("@@")) {
                 String sinId = (id.split(":"))[1].replace("\"","").trim();
@@ -492,7 +582,7 @@ public class Main extends JFrame implements Runnable{
         JSONObject sc = JSONObject.fromObject(s);
         JSONObject user = sc.getJSONObject("User");
         userID = user.get("UserName").toString();
-
+        userName = user.get("NickName").toString();
         //开启微信状态通知
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxstatusnotify?lang=zh_CN&pass_ticket="+pass_ticket;
         js.put("Code",3);
@@ -500,6 +590,9 @@ public class Main extends JFrame implements Runnable{
         js.put("ToUserName",userID);
         js.put("ClientMsgId", Long.valueOf(timeStamp));
         this.sendPostRequest(url,js,header);
+        this.getHeaderImg();
+        while(!statusNotifyFlag)
+            this.checkMsg();
     }
 
     //获取群列表(ChatRoomID)
@@ -524,20 +617,15 @@ public class Main extends JFrame implements Runnable{
         }
         js.put("List",groupJs);
         String s = this.sendPostRequest(url,js);
-//        System.out.println(s);
         JSONObject jsonObject = JSONObject.fromObject(s);
-//        int count = jsonObject.getInt("Count");
-//        jTextArea.append("共有"+count+"个群:\n");
         JSONArray contactList = jsonObject.getJSONArray("ContactList");
         for(int i = 0;i<contactList.size();i++){
-//            jTextArea.append("第"+(i+1)+"个群("+contactList.getJSONObject(i).getString("NickName")+")共有"+contactList.getJSONObject(i).getInt("MemberCount")+"位成员\n");
             GroupInfo groupInfo = new GroupInfo();
             groupInfo.setGroupID(contactList.getJSONObject(i).getString("UserName"));
             groupInfo.setMemberCount(contactList.getJSONObject(i).getInt("MemberCount"));
             groupInfo.setGroupName(contactList.getJSONObject(i).getString("NickName"));
             JSONArray jsonArray = contactList.getJSONObject(i).getJSONArray("MemberList");
             for(int j = 0;j<jsonArray.size();j++){
-//                jTextArea.append("第"+(j+1)+"位成员: "+jsonArray.getJSONObject(j).getString("NickName")+"\n");
                 UserInfo userInfo = new UserInfo();
                 userInfo.setNickName(jsonArray.getJSONObject(j).getString("NickName"));
                 userInfo.setUserId(jsonArray.getJSONObject(j).getString("UserName"));
@@ -546,34 +634,35 @@ public class Main extends JFrame implements Runnable{
             groupInfoList.add(groupInfo);
         }
     }
-    //生成二维码并显示
+    //显示二维码
     private void showPic(String url)throws Exception{
-        URL u = new URL(url);
-        DataInputStream in = new DataInputStream(u.openStream());
-        FileOutputStream out = new FileOutputStream(new File("1.jpg"));
-        byte[] b = new byte[1024];
-        int length;
-        while((length=in.read(b))>0){
-            out.write(b,0,length);
+        ImageIcon image = new ImageIcon(httpRequest.get(url).bytes());
+        if(updatePic){
+            windowUI.getjPanel().remove(windowUI.getjLabel_0());
+            updatePic=false;
         }
-        in.close();
-        out.close();
-        ImageIcon image = new ImageIcon("1.jpg");
-        jLabel_0 = new JLabel(image);
-        jLabel_0.setBounds(0,0,image.getIconWidth(),image.getIconHeight());
-        if(jPanel.getComponentCount()==0) {
-            jPanel.add(jLabel_0);
-            this.setVisible(true);
-        }
-        jPanel.validate();
-        jPanel.repaint();
-
+        windowUI.setjLabel_0(new JLabel(image));
+        windowUI.getjPanel().add(windowUI.getjLabel_0());
+        windowUI.getF().setVisible(true);
+        windowUI.getjPanel().validate();
+        windowUI.getjPanel().repaint();
+        windowUI.getF().setSize(480,480);
     }
-
-    //获取二维码的uuid
+    //获取头像
+    private void getHeaderImg()throws Exception{
+        url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxgeticon?username="+userID+"&skey="+skey;
+        ImageIcon image = new ImageIcon(httpRequest.get(url).header("Cookie",header).bytes());
+        windowUI.setUserHeaderImg(new JLabel(image));
+        windowUI.getUserHeaderImg().setBounds(0,0,image.getIconWidth(),image.getIconHeight());
+        windowUI.getUserInfoJPanel().add(windowUI.getUserHeaderImg());
+        windowUI.setUserNameLabel(new JLabel("用户名"+userName));
+        windowUI.getUserNameLabel().setFont(new Font("黑体",1,16));
+        windowUI.getUserInfoJPanel().add(windowUI.getUserNameLabel());
+    }
+    //获取uuid
     private String produceUuid()throws Exception{
         timeStamp = String.valueOf(System.currentTimeMillis());
-        url = "https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&redirect_uri=https%3A%2F%2Fwx.qq.com%2Fcgi-bin%2Fmmwebwx-bin%2Fwebwxnewloginpage&fun=new&lang=zh_CN&_=" + timeStamp;//request的设置
+        url = "https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&redirect_uri=https%3A%2F%2Fwx.qq.com%2Fcgi-bin%2Fmmwebwx-bin%2Fwebwxnewloginpage&fun=new&lang=zh_CN&_=" + timeStamp;//request??????
         String s = this.sendPostRequest(url, null);
         uuid = s.substring(s.length() - 14, s.length() - 2);
         s = this.produceErWei(uuid);
@@ -583,7 +672,7 @@ public class Main extends JFrame implements Runnable{
     //退出微信
     private void exitWeChat()throws Exception{
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxlogout?redirect=1&type=0&skey="+skey;
-        String s = httpRequest.post(url).header("Cookie",header).send("sid="+URLEncoder.encode(wxsid,"utf-8")+"&uin="+wxuin).body();
+        httpRequest.post(url).header("Cookie",header).send("sid="+wxsid+"&uin="+wxuin).body();
     }
 
     /**
@@ -593,186 +682,561 @@ public class Main extends JFrame implements Runnable{
     public static void main(String[] args) throws Exception {
         System.setProperty ("jsse.enableSNIExtension", "false");
         final Main htmlUnit = new Main();
-        Long oldTime;
-        Long newTime;
-        String s;
-        //获取二维码的uuid
-        out:while(true) {
-            s = htmlUnit.produceUuid();
-            htmlUnit.showPic(s);
-            oldTime = System.currentTimeMillis();
-            int tip=1;
-            url = "https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&uuid="+uuid+"&tip="+tip+"&_="+timeStamp;
-            in:while(true){
-                s= htmlUnit.sendPostRequest(url, null);
-                if(s.contains("408")){
-                    newTime = System.currentTimeMillis();
-                    if(newTime-oldTime>=22000)
-                        continue out;
-                }
-                if(s.contains("201")&&s.contains("userAvatar")){
-//                String s2[]=s.split("'");
-//                userAvatar  =s2[1];
-                    tip = 0;
-//                continue;
-                }
-                else{
-                    String s1[] = s.split("\"");
-                    if(s1.length==3) {
-                        url = s1[1] + "&fun=new&version=v2&lang=zh_CN";
-                        URL u = new URL(url);
-                        host = u.getHost();
-                    }
-                    htmlUnit.produceKey();
-                    break out;
-                }
-            }
-        }
-        htmlUnit.initWeChat();
-        htmlUnit.getList();
-        htmlUnit.getRecentList();
-        final Thread t1 = new Thread(htmlUnit);
-        t1.setPriority(Thread.MAX_PRIORITY);
-        t1.start();
-        final Thread t2 = new Thread(htmlUnit);
-        t2.setPriority(Thread.MAX_PRIORITY);
-        t2.start();
-        SwingUtilities.invokeAndWait(new Runnable() {
+        mainThread =new Thread(new Runnable() {
             @Override
             public void run() {
-                jPanel.remove(jLabel_0);
-                jPanel.add(jButton_0);
-                jPanel.add(jButton_1);
-                jPanel.add(jButton_2);
-//        jPanel.add(jButton_3);
-                jScrollPane = new JScrollPane(jTextArea);
-                jTextArea.setText("您已登录成功，开始进行实时消息记录!\n");
-                jTextArea.setSize(600,600);
-                jScrollPane.setHorizontalScrollBarPolicy(
-                        JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-                jScrollPane.setVerticalScrollBarPolicy(
-                        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-                jPanel.add(jScrollPane);
-                jPanel.validate();
-                jPanel.repaint();
-                jButton_1.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        try{
-                            if(!flag) {
-                                flag = true;
+                try {
+                    Long oldTime;
+                    Long newTime;
+                    String s;
+                    out:
+                    while (true) {
+                        s = htmlUnit.produceUuid();
+                        htmlUnit.showPic(s);
+                        oldTime = System.currentTimeMillis();
+                        int tip = 1;
+                        url = "https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login?loginicon=true&uuid=" + uuid + "&tip=" + tip + "&_=" + timeStamp;
+                        in:
+                        while (true) {
+                            s = htmlUnit.sendPostRequest(url, null);
+                            newTime = System.currentTimeMillis();
+                            if (newTime - oldTime >= 30000) {
+                                updatePic = true;
+                                continue out;
                             }
-                            else {
-                                flag = false;
+                            if (s.contains("201") && s.contains("userAvatar")) {
+//                String s2[]=s.split("'");
+//                userAvatar  =s2[1];
+                                tip = 0;
+//                continue;
+                            } else if (s.contains("200")) {
+                                String s1[] = s.split("\"");
+                                if (s1.length == 3) {
+                                    url = s1[1] + "&fun=new&version=v2&lang=zh_CN";
+                                    URL u = new URL(url);
+                                    host = u.getHost();
+                                }
+                                htmlUnit.produceKey();
+                                break out;
                             }
-                        }catch (Exception e1){
-                            e1.printStackTrace();
                         }
                     }
+                    htmlUnit.initWeChat();
+                    htmlUnit.getList();
+                    htmlUnit.getRecentList();
+                    htmlUnit.readFiles();
+                    windowUI.getjPanel().remove(windowUI.getjLabel_0());
+                    windowUI.getF().remove(windowUI.getjPanel());
+                    windowUI.getF().setSize(480,600);
+                    windowUI.getGb().gridx=0;
+                    windowUI.getGb().gridy=0;
+                    windowUI.getGb().gridwidth=0;
+                    windowUI.getGb().ipady=200;
+                    windowUI.getGb().ipadx=480;
+                    windowUI.getF().add(windowUI.getUserInfoJPanel(),windowUI.getGb());
+                    windowUI.getjPanel().setLayout(new FlowLayout(FlowLayout.CENTER,30,20));
+                    windowUI.getjPanel().add(windowUI.getjPanel_1());
+                    windowUI.getjPanel().add(windowUI.getjPanel_2());
+                    windowUI.getjPanel().add(windowUI.getjPanel_9());
+                    windowUI.getjPanel().add(windowUI.getjPanel_3());
+                    windowUI.getjPanel().add(windowUI.getjPanel_4());
+                    windowUI.getjPanel().add(windowUI.getjPanel_5());
+                    windowUI.getjPanel().add(windowUI.getjPanel_6());
+                    windowUI.getjPanel().add(windowUI.getjPanel_7());
+                    windowUI.getjPanel().add(windowUI.getjPanel_10());
+                    windowUI.getjPanel().add(windowUI.getjPanel_11());
+                    windowUI.getjPanel().add(windowUI.getjPanel_8());
+                    windowUI.getGb().gridx=0;
+                    windowUI.getGb().gridy=1;
+                    windowUI.getGb().weightx=4;
+                    windowUI.getGb().ipady=400;
+                    windowUI.getF().add(windowUI.getjPanel(),windowUI.getGb());
+                    windowUI.getF().setVisible(true);
+                    windowUI.getInviteIntoGroup().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            Vector<String> group = new Vector<>();
+                            Vector<String> friend = new Vector<>();
+                            for(int i = 0;i<groupInfoList.size();i++){
+                                group.add(groupInfoList.get(i).getGroupName());
+                            }
+                            windowUI.setjList2(new JList(group));
+                            windowUI.getjList2().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                            for(int i = 0;i<userInfoList.size();i++){
+                                friend.add(userInfoList.get(i).getNickName());
+                            }
+                            windowUI.setjList1(new JList(friend));
+//                            windowUI.getjList1().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                            windowUI.setInviteScrollPane1(new JScrollPane(windowUI.getjList1()));
+                            windowUI.setInviteScrollPane2(new JScrollPane(windowUI.getjList2()));
+                            windowUI.getjList1().setSize(400,400);
+                            windowUI.getjList2().setSize(400,400);
+                            windowUI.getjList1().setBorder(BorderFactory.createTitledBorder("好友昵称"));
+                            windowUI.getjList2().setBorder(BorderFactory.createTitledBorder("群名称"));
+                            windowUI.setInviteScrollPane1(new JScrollPane(windowUI.getjList1()));
+                            windowUI.setInviteScrollPane2(new JScrollPane(windowUI.getjList2()));
+                            windowUI.getInviteScrollPane1().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                            windowUI.getInviteScrollPane1().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                            windowUI.getInviteScrollPane2().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                            windowUI.getInviteScrollPane2().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                            windowUI.getInvitePanel().add(windowUI.getInviteScrollPane1());
+                            windowUI.getInvitePanel().add(windowUI.getInviteScrollPane2());
+                            windowUI.getGroupInvite().add(BorderLayout.SOUTH,windowUI.getInvite());
+                            windowUI.getGroupInvite().setVisible(true);
+                            windowUI.getjList1().addListSelectionListener(new ListSelectionListener() {
+                                @Override
+                                public void valueChanged(ListSelectionEvent e) {
+                                    String s = windowUI.getjList1().getSelectedValue().toString();
+                                    for(int i =0;i<userInfoList.size();i++){
+                                        if(s.equals(userInfoList.get(i).getNickName())){
+                                            if(invitedUserID.equals(""))
+                                                invitedUserID = userInfoList.get(i).getUserId();
+                                            else
+                                                invitedUserID = invitedUserID+","+userInfoList.get(i).getUserId();
 
-                });
-            }
-        });
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                            windowUI.getjList2().addListSelectionListener(new ListSelectionListener() {
+                                @Override
+                                public void valueChanged(ListSelectionEvent e) {
+                                    String s = windowUI.getjList2().getSelectedValue().toString();
+                                    for(int i = 0;i<groupInfoList.size();i++){
+                                        if(s.equals(groupInfoList.get(i).getGroupName())){
+                                            invitedGroupID = groupInfoList.get(i).getGroupID();
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
 
-        jButton_0.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try{
-                    if(flag1)
-                        flag1=false;
-                    else
-                        flag1 = true;
-                }catch (Exception e2){
-                    e2.printStackTrace();
-                }
-            }
-        });
-        jButton_3.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(flag3)
-                    flag3=false;
-                else
-                    flag3=true;
-            }
-        });
-        jButton_2.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(flag2)
-                    flag2=false;
-                else
-                    flag2=true;
-            }
-        });
+                    windowUI.getInvite().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if(!invitedGroupID.equals("")&&!invitedUserID.equals("")) {
+                                htmlUnit.addMember(invitedUserID, invitedGroupID);
+                            }
+                        }
+                    });
 
-        htmlUnit.addWindowListener(new WindowListener() {
-            @Override
-            public void windowOpened(WindowEvent e) {
+                    windowUI.getRemoveFromGroup().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            Vector<String> group = new Vector<>();
+                            Vector<String> friend = new Vector<>();
+                            for(int i = 0;i<groupInfoList.size();i++){
+                                group.add(groupInfoList.get(i).getGroupName());
+                            }
+                            windowUI.setjList3(new JList(group));
+                        }
+                    });
+                    windowUI.getChatJButton().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                flag=true;
+                                windowUI.getChatIn().setVisible(true);
+                                windowUI.getChatJButton().setEnabled(false);
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
 
-            }
+                    });
 
-            @Override
-            public void windowClosing(WindowEvent e) {
-                try{
-                    htmlUnit.exitWeChat();
-                }catch (Exception e1){
-                    e1.printStackTrace();
-                }
-            }
+                    windowUI.getAddFriend().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                if (flag1) {
+                                    flag1 = false;
+                                    windowUI.getAddFriend().setIcon(new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
+                                    windowUI.getAddFriend().repaint();
+                                }
+                                else {
+                                    flag1 = true;
+                                    windowUI.getAddFriend().setIcon(windowUI.getAddFriend().getDisabledIcon());
+                                    windowUI.getAddFriend().repaint();
+                                }
+                            } catch (Exception e2) {
+                                e2.printStackTrace();
+                            }
+                        }
+                    });
 
-            @Override
-            public void windowClosed(WindowEvent e) {
-                try{
-                    htmlUnit.exitWeChat();
-                }catch (Exception e1){
-                    e1.printStackTrace();
-                }
-            }
+                    windowUI.getReply().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (flag2){
+                                flag2 = false;
+                                windowUI.getReply().setIcon(new ImageIcon(WindowUI.class.getResource("resource/reply.png")));
+                                windowUI.getReply().repaint();
+                            }
+                            else {
+                                flag2 = true;
+                                windowUI.getReply().setIcon(windowUI.getReply().getDisabledIcon());
+                                windowUI.getReply().repaint();
+                            }
+                        }
+                    });
 
-            @Override
-            public void windowIconified(WindowEvent e) {
+                    windowUI.getWarn().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if (flag3) {
+                                flag3 = false;
+                                windowUI.getWarn().setIcon(new ImageIcon(WindowUI.class.getResource("resource/warn.png")));
+                                windowUI.getWarn().repaint();
+                            }
+                            else {
+                                flag3 = true;
+                                windowUI.getWarn().setIcon(windowUI.getWarn().getDisabledIcon());
+                                windowUI.getWarn().repaint();
+                            }
+                        }
+                    });
 
-            }
+                    windowUI.getAutoChat().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if(flag5) {
+                                flag5 = false;
+                                windowUI.getAutoChat().setIcon(new ImageIcon(WindowUI.class.getResource("resource/auto_chat.png")));
+                                windowUI.getAutoChat().repaint();
+                            }
+                            else {
+                                flag5 = true;
+                                windowUI.getAutoChat().setIcon(windowUI.getAutoChat().getDisabledIcon());
+                                windowUI.getAutoChat().repaint();
+                            }
+                        }
+                    });
 
-            @Override
-            public void windowDeiconified(WindowEvent e) {
+                    windowUI.getSendByTime().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            flag4=true;
+                            windowUI.getSendByTime().setEnabled(false);
+                            windowUI.getDailyTip().setVisible(true);
+                            for(int i = 0;i<groupInfoList.size();i++)
+                                windowUI.getGroupNameArea().addItem(groupInfoList.get(i).getGroupName());
+                        }
+                    });
 
-            }
+                    windowUI.getLocalWord().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            windowUI.getWordModify().setVisible(true);
+                            windowUI.getLocalWord().setEnabled(false);
+                        }
+                    });
 
-            @Override
-            public void windowActivated(WindowEvent e) {
+                    windowUI.getAddTipButton().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            TipRecord tipRecord = new TipRecord();
+                            windowUI.addTip(tipRecord);
+                            try {
+                                tipRecord.setTime(windowUI.getDf().format(windowUI.getDf().parse(windowUI.getTimeArea().getText())).toString());
+                                tipRecord.setProperty(windowUI.getPropertyArea().getText());
+                                tipRecord.setGroupName(windowUI.getGroupNameArea().getSelectedItem().toString());
+                                tipRecordList.add(tipRecord);
+                            }catch (Exception e1){
+                                e1.printStackTrace();
+                            }
+                        }
+                    });
+                    windowUI.getShowGroupList().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if(windowUI.getShowGroupPanel().getComponentCount()==0) {
+                                for (final GroupInfo groupInfo: groupInfoList) {
+                                    final JCheckBox jc = new JCheckBox(groupInfo.getGroupName());
+                                    jc.setSelected(true);
+                                    windowUI.getShowGroupPanel().add(jc);
+                                    jc.addChangeListener(new ChangeListener() {
+                                        @Override
+                                        public void stateChanged(ChangeEvent e) {
+                                            if(!jc.isSelected())
+                                                groupInfo.setFlag(false);
+                                            else{
+                                                groupInfo.setFlag(true);
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                            windowUI.getChooseGroup().setVisible(true);
+                            windowUI.getChooseGroup().pack();
+                        }
+                    });
 
-            }
+                    windowUI.getSeeRecord().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                Runtime.getRuntime().exec("cmd /c start "+userName+"_群聊天记录.csv");
+                            }catch(Exception e1){
+                                e1.printStackTrace();
+                            }
 
-            @Override
-            public void windowDeactivated(WindowEvent e) {
+                        }
+                    });
 
-            }
-        });
+                    windowUI.getSaveRecord().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try{
+                                File record = new File(userName+"_群聊天记录.csv");
+                                if(!record.exists()){
+                                    record.createNewFile();
+                                    String title = "时间,群名/发起人,群成员/接收人,内容\r\n";
+                                    BufferedWriter bw = new BufferedWriter(new FileWriter(record,true));
+                                    bw.write(title);
+                                    bw.flush();
+                                    bw.close();
+                                }
+                                BufferedWriter bw = new BufferedWriter(new FileWriter(new File(userName+"_群聊天记录.csv"),true));
+                                for(String r:recordList){
+                                    bw.write(r+"\r\n");
+                                }
+                                bw.flush();
+                                bw.close();
+                            }catch (IOException e1){
+                                e1.printStackTrace();
+                            }
+                        }
+                    });
+                    windowUI.getPublicWord().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                Runtime.getRuntime().exec("notepad.exe 公开.txt");
+                            }catch (Exception e1){
+                                e1.printStackTrace();
+                            }
+                        }
+                    });
 
+                    windowUI.getPrivateWord().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                Runtime.getRuntime().exec("notepad.exe 私密.txt");
+                            }catch (Exception e1){
+                                e1.printStackTrace();
+                            }
+                        }
+                    });
 
+                    WindowUI.getSenseWord().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                Runtime.getRuntime().exec("notepad.exe 敏感词.txt");
+                            }catch (Exception e1){
+                                e1.printStackTrace();
+                            }
+                        }
+                    });
 
-    }
+                    windowUI.getChatIn().addWindowListener(new WindowListener() {
+                        @Override
+                        public void windowOpened(WindowEvent e) {
 
-    @Override
-    public void run() {
-        while(true){
-            if(this.flag) {
-                try {
-                    this.checkMsg();
-                } catch (Exception e) {
+                        }
+
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+                            flag=false;
+                            windowUI.getChatIn().setVisible(false);
+                            windowUI.getChatJButton().setEnabled(true);
+                        }
+
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            flag = false;
+                            windowUI.getChatIn().setVisible(false);
+                            windowUI.getChatJButton().setEnabled(true);
+                        }
+
+                        @Override
+                        public void windowIconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeiconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowActivated(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeactivated(WindowEvent e) {
+
+                        }
+                    });
+                    windowUI.getF().addWindowListener(new WindowListener() {
+                        @Override
+                        public void windowOpened(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+                            try {
+                                htmlUnit.exitWeChat();
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            try {
+                                htmlUnit.exitWeChat();
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void windowIconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeiconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowActivated(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeactivated(WindowEvent e) {
+
+                        }
+                    });
+                    windowUI.getDailyTip().addWindowListener(new WindowListener() {
+                        @Override
+                        public void windowOpened(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+                            flag4 = false;
+                            windowUI.getDailyTip().setVisible(false);
+                            windowUI.getSendByTime().setEnabled(true);
+                            windowUI.getGroupNameArea().removeAllItems();
+                        }
+
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            flag4 = false;
+                            windowUI.getDailyTip().setVisible(false);
+                            windowUI.getSendByTime().setEnabled(true);
+                            windowUI.getGroupNameArea().removeAllItems();
+                        }
+
+                        @Override
+                        public void windowIconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeiconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowActivated(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeactivated(WindowEvent e) {
+
+                        }
+                    });
+                    windowUI.getWordModify().addWindowListener(new WindowListener() {
+                        @Override
+                        public void windowOpened(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+                            windowUI.getLocalWord().setEnabled(true);
+                        }
+
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            windowUI.getLocalWord().setEnabled(true);
+                        }
+
+                        @Override
+                        public void windowIconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeiconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowActivated(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeactivated(WindowEvent e) {
+
+                        }
+                    });
+                }catch (Exception e){
                     e.printStackTrace();
                 }
             }
-            if(this.flag1&&!v_ticket.equals("")){
-                try {
-                    this.addFriend();
-                } catch (Exception e) {
-                    e.printStackTrace();
+        });
+        mainThread.setPriority(10);
+        mainThread.start();
+        while (true) {
+            if(flag) {
+                htmlUnit.checkMsg();
+            }
+            if (flag1 && !v_ticket.equals("")) {
+                htmlUnit.addFriend();
+            }
+            if(flag4){
+                if(tipRecordList.size()==0)
+                    continue;
+                for(int i=0;i<tipRecordList.size();i++){
+                    if (!tipRecordList.get(i).getFlag()&&windowUI.getDf().format(new Date()).toString().equals(tipRecordList.get(i).getTime())) {
+                        for(int j = 0;j<groupInfoList.size();j++){
+                            if(groupInfoList.get(j).getGroupName().equals(tipRecordList.get(i).getGroupName())){
+                                tipGroupID = groupInfoList.get(j).getGroupID();
+                                break;
+                            }
+                        }
+                        htmlUnit.replayMsg(tipRecordList.get(i).getProperty(), tipGroupID);
+                        tipRecordList.get(i).setFlag(true);
+                    }
                 }
             }
-//            System.out.print(flag);
         }
+
     }
 }
