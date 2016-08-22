@@ -38,11 +38,11 @@ public class Main{
     private static HttpRequest httpRequest;
     private static Boolean statusNotifyFlag = false;
     private static Boolean updatePic = false;
-    private static volatile Boolean flag = false;
-    private static volatile Boolean flag1 = false;
+    private static volatile Boolean flag = false;//控制消息更新
+    private static volatile Boolean flag1 = false;//控制自动添加好友
     private static Boolean flag2 = true;
     private static Boolean flag3 = true;
-    private static volatile Boolean flag4 = false;
+    private static volatile Boolean flag4 = false;//控制定时发布
     private static Boolean flag5 = false;
     private static String url;
     private static String timeStamp;
@@ -81,6 +81,8 @@ public class Main{
     private static String friendId;
     private static String invitedUserID="";
     private static String invitedGroupID="";
+    private static String removeUserID="";
+    private static String removeGroupID="";
     private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static List<TipRecord> tipRecordList = new ArrayList<>();
     private static Document doc;
@@ -512,7 +514,7 @@ public class Main{
         JSONArray jsonArray = jsonObject.getJSONArray("MemberList");
         for(int i =0;i<jsonArray.size();i++){
             jsonObject = jsonArray.getJSONObject(i);
-            if(!jsonObject.getString("UserName").contains("@@")) {
+            if(!jsonObject.getString("UserName").contains("@@")&&jsonObject.getInt("Sex")!=0) {
                 UserInfo userInfo = new UserInfo();
                 userInfo.setNickName(jsonObject.getString("NickName"));
                 userInfo.setUserId(jsonObject.getString("UserName"));
@@ -571,7 +573,7 @@ public class Main{
             if(usrname.contains("UserName"))
                 usrName.add(usrname);
         }
-        //获取一部分ID
+        //获取一部分群组ID
         for(String id:usrName){
             if(id.contains("@@")) {
                 String sinId = (id.split(":"))[1].replace("\"","").trim();
@@ -745,6 +747,7 @@ public class Main{
                     windowUI.getjPanel().add(windowUI.getjPanel_7());
                     windowUI.getjPanel().add(windowUI.getjPanel_10());
                     windowUI.getjPanel().add(windowUI.getjPanel_11());
+                    windowUI.getjPanel().add(windowUI.getjPanel_12());
                     windowUI.getjPanel().add(windowUI.getjPanel_8());
                     windowUI.getGb().gridx=0;
                     windowUI.getGb().gridy=1;
@@ -755,6 +758,7 @@ public class Main{
                     windowUI.getInviteIntoGroup().addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
+                            htmlUnit.getList();
                             Vector<String> group = new Vector<>();
                             Vector<String> friend = new Vector<>();
                             for(int i = 0;i<groupInfoList.size();i++){
@@ -766,13 +770,10 @@ public class Main{
                                 friend.add(userInfoList.get(i).getNickName());
                             }
                             windowUI.setjList1(new JList(friend));
-//                            windowUI.getjList1().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
                             windowUI.setInviteScrollPane1(new JScrollPane(windowUI.getjList1()));
                             windowUI.setInviteScrollPane2(new JScrollPane(windowUI.getjList2()));
                             windowUI.getjList1().setSize(400,400);
                             windowUI.getjList2().setSize(400,400);
-                            windowUI.getjList1().setBorder(BorderFactory.createTitledBorder("好友昵称"));
-                            windowUI.getjList2().setBorder(BorderFactory.createTitledBorder("群名称"));
                             windowUI.setInviteScrollPane1(new JScrollPane(windowUI.getjList1()));
                             windowUI.setInviteScrollPane2(new JScrollPane(windowUI.getjList2()));
                             windowUI.getInviteScrollPane1().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -781,34 +782,25 @@ public class Main{
                             windowUI.getInviteScrollPane2().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
                             windowUI.getInvitePanel().add(windowUI.getInviteScrollPane1());
                             windowUI.getInvitePanel().add(windowUI.getInviteScrollPane2());
+                            windowUI.getInviteScrollPane1().setBorder(BorderFactory.createTitledBorder("好友昵称"));
+                            windowUI.getInviteScrollPane2().setBorder(BorderFactory.createTitledBorder("群名称"));
                             windowUI.getGroupInvite().add(BorderLayout.SOUTH,windowUI.getInvite());
                             windowUI.getGroupInvite().setVisible(true);
                             windowUI.getjList1().addListSelectionListener(new ListSelectionListener() {
                                 @Override
                                 public void valueChanged(ListSelectionEvent e) {
-                                    String s = windowUI.getjList1().getSelectedValue().toString();
-                                    for(int i =0;i<userInfoList.size();i++){
-                                        if(s.equals(userInfoList.get(i).getNickName())){
-                                            if(invitedUserID.equals(""))
-                                                invitedUserID = userInfoList.get(i).getUserId();
-                                            else
-                                                invitedUserID = invitedUserID+","+userInfoList.get(i).getUserId();
-
-                                            break;
-                                        }
-                                    }
+                                    int index= windowUI.getjList1().getSelectedIndex();
+                                    if(invitedUserID.equals(""))
+                                        invitedUserID = userInfoList.get(index).getUserId();
+                                    else
+                                        invitedUserID = invitedUserID+","+userInfoList.get(index).getUserId();
                                 }
                             });
                             windowUI.getjList2().addListSelectionListener(new ListSelectionListener() {
                                 @Override
                                 public void valueChanged(ListSelectionEvent e) {
-                                    String s = windowUI.getjList2().getSelectedValue().toString();
-                                    for(int i = 0;i<groupInfoList.size();i++){
-                                        if(s.equals(groupInfoList.get(i).getGroupName())){
-                                            invitedGroupID = groupInfoList.get(i).getGroupID();
-                                            break;
-                                        }
-                                    }
+                                    int index= windowUI.getjList2().getSelectedIndex();
+                                    invitedGroupID = groupInfoList.get(index).getGroupID();
                                 }
                             });
                         }
@@ -823,17 +815,65 @@ public class Main{
                         }
                     });
 
-                    windowUI.getRemoveFromGroup().addActionListener(new ActionListener() {
+                    windowUI.getRemoveFromGroup().addActionListener(new ActionListener(){
                         @Override
                         public void actionPerformed(ActionEvent e) {
+                            try{
+                                htmlUnit.getRecentList();
+                            }catch(Exception e1){
+                                System.out.println(e1);
+                            }
                             Vector<String> group = new Vector<>();
-                            Vector<String> friend = new Vector<>();
                             for(int i = 0;i<groupInfoList.size();i++){
                                 group.add(groupInfoList.get(i).getGroupName());
                             }
                             windowUI.setjList3(new JList(group));
+                            windowUI.setRemoveScrollPane1(new JScrollPane(windowUI.getjList3()));
+                            windowUI.setRemoveScrollPane2(new JScrollPane(windowUI.getjList4()));
+                            windowUI.getjList4().setSize(400,400);
+                            windowUI.getjList3().setSize(400,400);
+                            windowUI.getjList3().setBorder(BorderFactory.createTitledBorder("选择群"));
+                            windowUI.getjList3().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+                            windowUI.getRemoveScrollPane2().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                            windowUI.getRemoveScrollPane2().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                            windowUI.getRemoveScrollPane2().setBorder(BorderFactory.createTitledBorder("选择群成员"));
+                            windowUI.getRemoveScrollPane1().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+                            windowUI.getRemoveScrollPane1().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                            windowUI.getRemovePanel().add(windowUI.getRemoveScrollPane1());
+                            windowUI.getRemovePanel().add(windowUI.getRemoveScrollPane2());
+                            windowUI.getGroupRemove().setVisible(true);
+                            windowUI.getjList3().addListSelectionListener(new ListSelectionListener() {
+                                @Override
+                                public void valueChanged(ListSelectionEvent e) {
+                                    windowUI.getFriend().clear();
+                                    windowUI.getFriendID().clear();
+                                    int index = windowUI.getjList3().getSelectedIndex();
+                                    removeGroupID = groupInfoList.get(index).getGroupID();
+                                    for(int i =0;i<groupInfoList.get(index).getGroup().size();i++) {
+                                        windowUI.getFriend().add(groupInfoList.get(index).getGroup().get(i).getNickName());
+                                        windowUI.getFriendID().add(groupInfoList.get(index).getGroup().get(i).getUserId());
+                                    }
+                                    windowUI.getjList4().setListData(windowUI.getFriend());
+                                    windowUI.getRemoveScrollPane2().repaint();
+                                }
+                            });
+                            windowUI.getjList4().addListSelectionListener(new ListSelectionListener() {
+                                @Override
+                                public void valueChanged(ListSelectionEvent e) {
+                                    int index = windowUI.getjList4().getSelectedIndex();
+                                    removeUserID = windowUI.getFriendID().get(index);
+                                }
+                            });
                         }
                     });
+                    windowUI.getRemove().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            if(!removeUserID.equals("")&&!removeGroupID.equals(""))
+                                htmlUnit.deleteMember(removeUserID,removeGroupID);
+                        }
+                    });
+
                     windowUI.getChatJButton().addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {

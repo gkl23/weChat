@@ -18,39 +18,30 @@ public class demo {
     public static void main(String args[])throws Exception{
         windowUI = new WindowUI();
         windowUI.getF().setSize(480,600);
-        String s[] = {"huhuhuasassa","dadadaasasa"};
-        windowUI.setjList1(new JList(s));
-        windowUI.setjList2(new JList(s));
-        windowUI.getjList1().setSize(400,400);
-        windowUI.getjList2().setSize(400,400);
-        windowUI.getjList1().setBorder(BorderFactory.createTitledBorder("好友昵称"));
-        windowUI.getjList2().setBorder(BorderFactory.createTitledBorder("群名称"));
-        windowUI.setInviteScrollPane1(new JScrollPane(windowUI.getjList1()));
-        windowUI.setInviteScrollPane2(new JScrollPane(windowUI.getjList2()));
-        windowUI.getInviteScrollPane1().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        windowUI.getInviteScrollPane1().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        windowUI.getInviteScrollPane2().setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        windowUI.getInviteScrollPane2().setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        windowUI.getInvitePanel().add(windowUI.getInviteScrollPane1());
-        windowUI.getInvitePanel().add(windowUI.getInviteScrollPane2());
-        windowUI.getGroupInvite().add(BorderLayout.SOUTH,windowUI.getInvite());
-        windowUI.getGroupInvite().setVisible(true);
+        windowUI.getGb().gridx=0;
+        windowUI.getGb().gridy=0;
+        windowUI.getGb().gridwidth=0;
+        windowUI.getGb().ipady=200;
+        windowUI.getGb().ipadx=480;
+        windowUI.getF().add(windowUI.getUserInfoJPanel(),windowUI.getGb());
+        windowUI.getjPanel().setLayout(new FlowLayout(FlowLayout.CENTER,30,20));
+        windowUI.getjPanel().add(windowUI.getjPanel_1());
+        windowUI.getjPanel().add(windowUI.getjPanel_2());
+        windowUI.getjPanel().add(windowUI.getjPanel_9());
+        windowUI.getjPanel().add(windowUI.getjPanel_3());
+        windowUI.getjPanel().add(windowUI.getjPanel_4());
+        windowUI.getjPanel().add(windowUI.getjPanel_5());
+        windowUI.getjPanel().add(windowUI.getjPanel_6());
+        windowUI.getjPanel().add(windowUI.getjPanel_7());
+        windowUI.getjPanel().add(windowUI.getjPanel_10());
+        windowUI.getjPanel().add(windowUI.getjPanel_11());
+        windowUI.getjPanel().add(windowUI.getjPanel_12());
+        windowUI.getjPanel().add(windowUI.getjPanel_8());
         windowUI.getGb().gridx=0;
         windowUI.getGb().gridy=1;
-        windowUI.getGb().weightx=3;
+        windowUI.getGb().weightx=4;
         windowUI.getGb().ipady=400;
         windowUI.getF().add(windowUI.getjPanel(),windowUI.getGb());
-//        windowUI.getF().setVisible(true);
-        windowUI.getInviteIntoGroup().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                windowUI.getGroupInvite().setVisible(true);
-            }
-        });
-        windowUI.getjList1().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-            }
-        });
+        windowUI.getF().setVisible(true);
     }
 }

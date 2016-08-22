@@ -11,7 +11,7 @@ public class GroupInfo {
     private String groupID = "";
     private String groupName="";
     private int memberCount;
-
+    private List<UserInfo> group = new ArrayList<>();
     public Boolean getFlag() {
         return flag;
     }
@@ -19,8 +19,6 @@ public class GroupInfo {
     public void setFlag(Boolean flag) {
         this.flag = flag;
     }
-
-    private List<UserInfo> group = new ArrayList<>();
 
     public String getGroupID() {
         return groupID;

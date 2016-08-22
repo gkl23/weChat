@@ -90,6 +90,8 @@ public class WindowUI {
     private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
     private static GridBagConstraints gb = new GridBagConstraints();
     private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
+    private static Vector<String> friend = new Vector<>();
+    private static Vector<String> friendID = new Vector<>();
 
     public WindowUI() {
         try {
@@ -102,6 +104,7 @@ public class WindowUI {
             wordModify = new JFrame("微信机器人--修改词库");
             chooseGroup =new JFrame("微信机器人--群列表");
             groupInvite = new JFrame("微信机器人--邀请进群");
+            groupRemove = new JFrame("微信机器人--踢人出群");
 
 
 
@@ -154,13 +157,17 @@ public class WindowUI {
             groupInvite.setDefaultCloseOperation(groupInvite.HIDE_ON_CLOSE);
             groupInvite.setSize(800,700);
             groupInvite.add(BorderLayout.CENTER,invitePanel);
+            groupInvite.add(BorderLayout.SOUTH,invite);
 
             groupRemove.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 200, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
             groupRemove.setVisible(false);
             groupRemove.setResizable(false);
+            groupRemove.setLayout(new BorderLayout());
             groupRemove.setDefaultCloseOperation(groupRemove.HIDE_ON_CLOSE);
             groupRemove.setSize(800,700);
             groupRemove.add(BorderLayout.CENTER,removePanel);
+            groupRemove.add(BorderLayout.SOUTH,remove);
+
 
 
             userInfoJPanel.setLayout(new FlowLayout(FlowLayout.CENTER,50,20));
@@ -242,7 +249,7 @@ public class WindowUI {
             jPanel_8.setBorder(null);
             jPanel_8.setLayout(new GridLayout(2, 1));
             jPanel_8.add(set);
-            JLabel j8 = new JLabel("设 置");
+            JLabel j8 = new JLabel("设    置");
             j8.setFont(new Font("黑体",1,16));
             jPanel_8.add(j8);
             jPanel_9.setBorder(null);
@@ -254,7 +261,7 @@ public class WindowUI {
             jPanel_10.setBorder(null);
             jPanel_10.setLayout(new GridLayout(2,1));
             jPanel_10.add(showGroupList);
-            JLabel j10 = new JLabel("群列表");
+            JLabel j10 = new JLabel("群组列表");
             j10.setFont(new Font("黑体",1,16));
             jPanel_10.add(j10);
             jPanel_11.setBorder(null);
@@ -336,7 +343,7 @@ public class WindowUI {
             wordPanel.add(sensePanel);
 
 
-            showGroupPanel.setLayout(new GridLayout(0,2,20,20));
+            showGroupPanel.setLayout(new GridLayout(0,1,20,20));
             showGroupPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
             completeChooseGroup.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
 
@@ -345,10 +352,13 @@ public class WindowUI {
             invite.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
             invite.setForeground(Color.white);
 
+
             removePanel.setLayout(new GridLayout(0,2,20,20));
             removePanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
             remove.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
             remove.setForeground(Color.white);
+            jList4 = new JList();
+
 
 
 
@@ -988,5 +998,21 @@ public class WindowUI {
 
     public static void setjList4(JList jList4) {
         WindowUI.jList4 = jList4;
+    }
+
+    public static Vector<String> getFriend() {
+        return friend;
+    }
+
+    public static void setFriend(Vector<String> friend) {
+        WindowUI.friend = friend;
+    }
+
+    public static Vector<String> getFriendID() {
+        return friendID;
+    }
+
+    public static void setFriendID(Vector<String> friendID) {
+        WindowUI.friendID = friendID;
     }
 }
