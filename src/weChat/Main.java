@@ -24,6 +24,7 @@ import Utils.Md5;
 import blade.kit.http.HttpRequest;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.jb2011.lnf.beautyeye.ch3_button.BEButtonUI;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -455,6 +456,7 @@ public class Main{
             }
         }
     }
+
     //消息回复
     private void replayMsg(String s,String id) throws Exception{
         url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket="+pass_ticket;
@@ -500,6 +502,32 @@ public class Main{
         jsonObject.put("ChatRoomName",GroupID);
         httpRequest = HttpRequest.post(url,true,"fun","delmember","pass_ticket",pass_ticket)
                 .header("Content-Type","application/json;charset=UTF-8").header("Cookie",header).send(jsonObject.toString());
+        httpRequest.body();
+        httpRequest.disconnect();
+    }
+
+    //修改群名
+    /**
+     * 修改群名
+     *
+     * @param chatroomUserName
+     *            群id
+     * @param newChatroomName
+     *            新的群名
+     * @return 修改成功true，否则false
+     */
+    private void modifyChatroomName(String chatroomUserName, String newChatroomName) {
+        url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
+
+        JSONObject baseRequest = new JSONObject();
+        baseRequest.put("BaseRequest", baseRequest);
+        baseRequest.put("ChatRoomName", chatroomUserName);
+        baseRequest.put("NewTopic", newChatroomName);
+
+        httpRequest = HttpRequest
+                .post(url, true, "fun", "modtopic", "pass_ticket", pass_ticket)
+                .header("Content-Type", "application/json;charset=UTF-8").header("Cookie", header)
+                .send(baseRequest.toString());
         httpRequest.body();
         httpRequest.disconnect();
     }
@@ -755,6 +783,36 @@ public class Main{
                     windowUI.getGb().ipady=400;
                     windowUI.getF().add(windowUI.getjPanel(),windowUI.getGb());
                     windowUI.getF().setVisible(true);
+
+                    //对于群名修改面板的组件改变
+                    for(final GroupInfo group:groupInfoList){
+                        final JLabel jLabel = new JLabel(group.getGroupName());
+                        jLabel.setBorder(BorderFactory.createTitledBorder("原群名"));
+                        final JTextArea jTextArea = new JTextArea();
+                        jTextArea.setBorder(BorderFactory.createTitledBorder("新群名"));
+                        jTextArea.setLineWrap(true);
+                        JButton jButton = new JButton("修改群名");
+                        jButton.setForeground(Color.white);
+                        jButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+                        windowUI.getSetGroupNamePanel().add(jLabel);
+                        windowUI.getSetGroupNamePanel().add(jTextArea);
+                        windowUI.getSetGroupNamePanel().add(jButton);
+                        jButton.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                if(!jTextArea.getText().equals("")||jTextArea.getText()!=null){
+                                    jLabel.setText(jTextArea.getText());
+                                    group.setGroupName(jTextArea.getText());
+                                    jTextArea.setText("");
+                                    htmlUnit.modifyChatroomName(group.getGroupID(),jTextArea.getText());
+                                }
+                                else{
+                                    JOptionPane.showMessageDialog(new Frame(),"错误：新群名一栏不能为空","错误",JOptionPane.ERROR_MESSAGE);
+                                }
+                            }
+                        });
+                    }
+
                     windowUI.getInviteIntoGroup().addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -842,6 +900,7 @@ public class Main{
                             windowUI.getRemovePanel().add(windowUI.getRemoveScrollPane1());
                             windowUI.getRemovePanel().add(windowUI.getRemoveScrollPane2());
                             windowUI.getGroupRemove().setVisible(true);
+
                             windowUI.getjList3().addListSelectionListener(new ListSelectionListener() {
                                 @Override
                                 public void valueChanged(ListSelectionEvent e) {
@@ -1073,7 +1132,7 @@ public class Main{
                         }
                     });
 
-                    WindowUI.getSenseWord().addActionListener(new ActionListener() {
+                    windowUI.getSenseWord().addActionListener(new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
                             try {
@@ -1081,6 +1140,14 @@ public class Main{
                             }catch (Exception e1){
                                 e1.printStackTrace();
                             }
+                        }
+                    });
+
+                    windowUI.getSet().addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            windowUI.getSetFrame().setVisible(true);
+                            windowUI.getSet().setEnabled(false);
                         }
                     });
 
@@ -1224,6 +1291,42 @@ public class Main{
                         @Override
                         public void windowClosed(WindowEvent e) {
                             windowUI.getLocalWord().setEnabled(true);
+                        }
+
+                        @Override
+                        public void windowIconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeiconified(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowActivated(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowDeactivated(WindowEvent e) {
+
+                        }
+                    });
+                    windowUI.getSetFrame().addWindowListener(new WindowListener() {
+                        @Override
+                        public void windowOpened(WindowEvent e) {
+
+                        }
+
+                        @Override
+                        public void windowClosing(WindowEvent e) {
+                            windowUI.getSet().setEnabled(true);
+                        }
+
+                        @Override
+                        public void windowClosed(WindowEvent e) {
+                            windowUI.getSet().setEnabled(true);
                         }
 
                         @Override
