@@ -10,6 +10,7 @@
       <root url="jar://$PROJECT_DIR$/beautyeye_lnf.jar!/" />
       <root url="jar://$PROJECT_DIR$/ezmorph-1.0.3.jar!/" />
       <root url="jar://$PROJECT_DIR$/mysql-connector-java-5.1.22-bin.jar!/" />
+      <root url="jar://$PROJECT_DIR$/commons-codec-1.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

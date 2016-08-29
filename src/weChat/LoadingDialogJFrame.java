@@ -33,7 +33,7 @@ public class LoadingDialogJFrame extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		loadingImg = new JLabel();
-		loadingImg.setIcon(new ImageIcon(LoadingDialogJFrame.class.getResource("/resource/loading_img.gif")));
+		loadingImg.setIcon(new ImageIcon(LoadingDialogJFrame.class.getResource("resource/chat.png")));
 
 		loadingLabel = new JLabel(loadingText);
 

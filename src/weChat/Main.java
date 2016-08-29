@@ -41,7 +41,7 @@ public class Main {
 	private static Boolean autoAddFriendFlag = true; // 控制自动添加好友
 	private static Boolean autoReplyFlag = true; // 自动回复
 	private static Boolean sensitiveFlag = true; // 敏感词警告
-	private static Boolean timerSendMsgFlag = true;// 控制定时发布
+//	private static Boolean timerSendMsgFlag = true;// 控制定时发布
 	private static String url;
 	private static String timeStamp;
 	private static String uuid;
@@ -499,7 +499,6 @@ public class Main {
 									windowUI.getAttributeSet());
 							recordList.add(df.format(new Date()) + ",我" + "," + to + "," + content);
 						}
-						// windowUI.getjTextPane().paintImmediately(windowUI.getjTextPane().getBounds());
 					} catch (BadLocationException e) {
 						e.printStackTrace();
 					}
@@ -525,7 +524,7 @@ public class Main {
 
 		// 生成Msg
 		msg.put("ClientMsgId", cmId);
-		msg.put("Content", s);// ??????
+		msg.put("Content", s);
 		msg.put("FromUserName", userID);
 		msg.put("LocalID", cmId);
 		msg.put("ToUserName", id);
@@ -777,7 +776,7 @@ public class Main {
 			public void run() {
 				while (true) {
 					checkMsg();
-					if (timerSendMsgFlag)
+					if (tipRecordList.size()!=0)
 						for (int i = 0; i < tipRecordList.size(); i++) {
 							if (!tipRecordList.get(i).getFlag() && windowUI.getDf().format(new Date()).toString()
 									.equals(tipRecordList.get(i).getTime())) {
@@ -935,8 +934,6 @@ public class Main {
 					for (int i = 0; i < userInfoList.size(); i++)
 						friend.add(userInfoList.get(i).getNickName());
 					windowUI.setjList1(new JList(friend));
-					JScrollPane groupListPane = windowUI.getInviteScrollPane1();
-					JScrollPane memberListPane = windowUI.getInviteScrollPane2();
 					windowUI.setInviteScrollPane1(new JScrollPane(windowUI.getjList1()));
 					windowUI.setInviteScrollPane2(new JScrollPane(windowUI.getjList2()));
 					windowUI.getjList1().setSize(400, 400);
@@ -1066,7 +1063,7 @@ public class Main {
 						} else {
 							autoAddFriendFlag = true;
 							windowUI.getAddFriend()
-									.setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.ADD_FRIEND_ICON_NAME)));
+									.setIcon(new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
 							windowUI.getAddFriend().repaint();
 						}
 					} catch (Exception e2) {
@@ -1085,7 +1082,7 @@ public class Main {
 					} else {
 						autoReplyFlag = true;
 						windowUI.getReply()
-								.setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.REPLY_ICON_NAME)));
+								.setIcon(new ImageIcon(WindowUI.class.getResource("resource/reply.png")));
 						windowUI.getReply().repaint();
 					}
 				}
@@ -1100,7 +1097,7 @@ public class Main {
 						windowUI.getWarn().repaint();
 					} else {
 						sensitiveFlag = true;
-						windowUI.getWarn().setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.WARN_ICON_NAME)));
+						windowUI.getWarn().setIcon(new ImageIcon(WindowUI.class.getResource("resource/warn.png")));
 						windowUI.getWarn().repaint();
 					}
 				}
@@ -1109,7 +1106,7 @@ public class Main {
 			windowUI.getSendByTime().addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					timerSendMsgFlag = true;
+//					timerSendMsgFlag = true;
 					windowUI.getSendByTime().setEnabled(false);
 					windowUI.getDailyTip().setVisible(true);
 					for (int i = 0; i < groupInfoList.size(); i++)
@@ -1197,6 +1194,7 @@ public class Main {
 						}
 						bw.flush();
 						bw.close();
+						JOptionPane.showMessageDialog(null, "信息已经保存成功!", "提示", JOptionPane.INFORMATION_MESSAGE);
 					} catch (IOException e1) {
 						e1.printStackTrace();
 					}
@@ -1325,18 +1323,18 @@ public class Main {
 
 				@Override
 				public void windowClosing(WindowEvent e) {
-					timerSendMsgFlag = false;
+//					timerSendMsgFlag = false;
 					windowUI.getDailyTip().setVisible(false);
 					windowUI.getSendByTime().setEnabled(true);
-					windowUI.getGroupNameArea().removeAllItems();
+//					windowUI.getGroupNameArea().removeAllItems();
 				}
 
 				@Override
 				public void windowClosed(WindowEvent e) {
-					timerSendMsgFlag = false;
+//					timerSendMsgFlag = false;
 					windowUI.getDailyTip().setVisible(false);
 					windowUI.getSendByTime().setEnabled(true);
-					windowUI.getGroupNameArea().removeAllItems();
+//					windowUI.getGroupNameArea().removeAllItems();
 				}
 
 				@Override

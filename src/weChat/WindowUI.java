@@ -122,6 +122,7 @@ public class WindowUI {
             chooseGroup =new JFrame("微信机器人--群列表");
             groupInvite = new JFrame("微信机器人--邀请进群");
             groupRemove = new JFrame("微信机器人--踢人出群");
+            setFrame= new JFrame("设置");
 
 
 
@@ -141,8 +142,11 @@ public class WindowUI {
             chatIn.setVisible(false);
             chatIn.setResizable(false);
             chatIn.setDefaultCloseOperation(chatIn.HIDE_ON_CLOSE);
-            chatIn.setLayout(new GridLayout(0,1));
-            chatIn.setSize(600, 400);
+            chatIn.setLayout(new GridBagLayout());
+            gb.gridx = GridBagConstraints.RELATIVE;
+            gb.gridy = GridBagConstraints.RELATIVE;
+            chatIn.setSize(600, 600);
+
 
             dailyTip.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 500, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 200);
             dailyTip.setVisible(false);
@@ -305,7 +309,7 @@ public class WindowUI {
             seeRecord.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
             saveRecord.setForeground(Color.white);
             seeRecord.setForeground(Color.white);
-            chatJPanel.setLayout(new FlowLayout(FlowLayout.CENTER,50,50));
+            chatJPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,20));
             chatJPanel.add(saveRecord);
             chatJPanel.add(seeRecord);
             jTextPane.setFocusable(true);
@@ -316,8 +320,16 @@ public class WindowUI {
                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             jScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            chatIn.add(jScrollPane);
-            chatIn.add(chatJPanel);
+            gb.gridx=0;
+            gb.ipady = 500;
+            gb.ipadx = 520;
+            gb.gridy=GridBagConstraints.RELATIVE;
+            gb.gridwidth=GridBagConstraints.REMAINDER;
+            chatIn.add(jScrollPane,gb);
+            gb.ipady = 100;
+            gb.ipadx = 300;
+            gb.gridheight = 3;
+            chatIn.add(chatJPanel,gb);
 
             //定时发布的组件设置
             addTipPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 20));
