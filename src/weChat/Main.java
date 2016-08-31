@@ -93,6 +93,9 @@ public class Main {
 
 	private static Thread checkForMsgThread; // 监听最新消息的线程
 
+	/**
+	 * 初始化微信机器人
+	 */
 	public Main() {
 		windowUI = new WindowUI();
 		doc = windowUI.getjTextPane().getDocument();
@@ -123,30 +126,36 @@ public class Main {
 		return httpRequest.header("Cookie", header).send(js.toString()).body();
 	}
 
+	/**
+	 * 图灵机器人智能聊天
+	 * @param content 聊天内容
+	 * @param userId  用户ID
+     * @return  回复内容
+     */
 	private String aiChat(String content, String userId) {
-		final String apiUrl = "http://www.tuling123.com/openapi/api"; // ????????api????
-		final String apiKey = "49d5dd04005a4d82b7d5bc30dae96821"; // ????????????apikey
-		final String secretKey = "02a06d8364d4ef9a"; // ????????key
+		final String apiUrl = "http://www.tuling123.com/openapi/api";
+		final String apiKey = "49d5dd04005a4d82b7d5bc30dae96821"; //apikey
+		final String secretKey = "02a06d8364d4ef9a"; //key
 		final String timeStamp = System.currentTimeMillis() + "";
 
-		// ???????
+
 		String key = Md5.MD5(secretKey + timeStamp + apiKey);
 
-		// ????????????м???
+
 		JSONObject chatData = new JSONObject();
 		chatData.put("key", apiKey);
 		chatData.put("info", content);
 		chatData.put("userid", userId);
 		String encryptChatData = new Aes(key).encrypt(chatData.toString());
 
-		// ????????
+
 		OutputStreamWriter outWriter = null;
 		BufferedReader inReader = null;
 		StringBuilder response = new StringBuilder("");
-		final int timeOut = 50 * 1000; // ?????????????50s
+		final int timeOut = 50 * 1000;
 		try {
 
-			// ??????????Щ???????????????
+
 			HttpURLConnection request = (HttpURLConnection) new URL(apiUrl).openConnection();
 			request.setDoOutput(true);
 			request.setDoInput(true);
@@ -206,7 +215,10 @@ public class Main {
 		return response.toString();
 	}
 
-	// 读取文件
+	/**
+	 * 读取词库文件
+	 * @throws Exception
+     */
 	private void readFiles() throws Exception {
 		String s[] = null;
 		File public_file = new File("公开.txt");
@@ -239,7 +251,10 @@ public class Main {
 		}
 	}
 
-	// 生成DiviceID
+	/**
+	 * 生成DeviceID
+	 * @return DeviceID
+     */
 	private String produceDevID() {
 		Random rm = new Random();
 
@@ -250,13 +265,20 @@ public class Main {
 		return fixLenthString.substring(1, 16 + 1);
 	}
 
-	// 生成二维码url
+	/**
+	 * 生成二维码的url
+	 * @param s 为uuid
+	 * @return  生成二维码的url
+     */
 	private String produceErWei(String s) {
 		s = "http://login.weixin.qq.com/qrcode/" + s;
 		return s;
 	}
 
-	// SyncKey转换
+	/**
+	 * SyncKey转换
+	 * @param s 转换前的包含synckey的json数据
+     */
 	private void syncKeyTransfer(String s) {
 		JSONObject fr = JSONObject.fromObject(s);
 		syncKey = fr.getJSONObject("SyncKey");
@@ -271,7 +293,9 @@ public class Main {
 		}
 	}
 
-	// 自动添加好友
+	/**
+	 * 自动通过好友验证
+     */
 	private void addFriend() {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxverifyuser?r=" + System.currentTimeMillis()
 				+ "&lang=zh_CN&pass_ticket=" + pass_ticket;
@@ -291,7 +315,10 @@ public class Main {
 
 	}
 
-	// 检查消息更新
+	/**
+	 * 检查消息是否有更新
+	 * 并对消息类别进行分类（如好友验证，图片消息，文字消息等）
+     */
 	private void checkMsg() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
 		String url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?skey=" + skey + "&sid=" + wxsid
@@ -517,7 +544,11 @@ public class Main {
 		}
 	}
 
-	// 消息回复
+	/**
+	 * 回复消息
+	 * @param s   回复的内容
+	 * @param id  回复对象的ID
+     */
 	private void replyMsg(String s, String id) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket=" + pass_ticket;
 		js.clear();
@@ -530,7 +561,7 @@ public class Main {
 
 		// 生成Msg
 		msg.put("ClientMsgId", cmId);
-		msg.put("Content", s);// ??????
+		msg.put("Content", s);
 		msg.put("FromUserName", userID);
 		msg.put("LocalID", cmId);
 		msg.put("ToUserName", id);
@@ -541,7 +572,12 @@ public class Main {
 		this.sendPostRequest(url, js);
 	}
 
-	// 邀请用户进群
+	/**
+	 * 邀请用户进群
+	 *
+	 * @param addUserID  用户ID
+	 * @param addGroupID 邀请用户进群的ID
+     */
 	private void addMember(String addUserID, String addGroupID) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
 		JSONObject jsonObject = new JSONObject();
@@ -736,10 +772,10 @@ public class Main {
 		}
 		windowUI.setjLabel_0(new JLabel(new ImageIcon(image.getImage().getScaledInstance(350, 350, Image.SCALE_FAST))));
 		windowUI.getjPanel().add(windowUI.getjLabel_0());
-		windowUI.getF().setVisible(true);
+		windowUI.getMainFrame().setVisible(true);
 		windowUI.getjPanel().validate();
 		windowUI.getjPanel().repaint();
-		windowUI.getF().setSize(400, 400);
+		windowUI.getMainFrame().setSize(400, 400);
 	}
 
 	// 获取头像
@@ -851,7 +887,7 @@ public class Main {
 							host = u.getHost();
 						}
 						loadingDialogJFrame.setLoadingText("正在登录...");
-						windowUI.getF().setVisible(false);
+						windowUI.getMainFrame().setVisible(false);
 						htmlUnit.produceKey();
 						break out;
 					}
@@ -870,14 +906,15 @@ public class Main {
 			htmlUnit.listenForMsg();
 			htmlUnit.readFiles();
 			windowUI.getjPanel().remove(windowUI.getjLabel_0());
-			windowUI.getF().remove(windowUI.getjPanel());
-			windowUI.getF().setSize(400, 600);
+			windowUI.getMainFrame().remove(windowUI.getjPanel());
+			windowUI.getMainFrame().setSize(400, 600);
 			windowUI.getGb().gridx = 0;
 			windowUI.getGb().gridy = 0;
 			windowUI.getGb().gridwidth = 0;
+			windowUI.getGb().gridheight = GridBagConstraints.BOTH;
 			windowUI.getGb().ipady = 100;
 			windowUI.getGb().ipadx = 480;
-			windowUI.getF().add(windowUI.getUserInfoJPanel(), windowUI.getGb());
+			windowUI.getMainFrame().add(windowUI.getUserInfoJPanel(), windowUI.getGb());
 			windowUI.getjPanel().setLayout(new FlowLayout(FlowLayout.CENTER, 15, 20));
 			windowUI.getjPanel().add(windowUI.getjPanel_1());
 			windowUI.getjPanel().add(windowUI.getjPanel_2());
@@ -895,8 +932,8 @@ public class Main {
 			windowUI.getGb().gridy = 1;
 			windowUI.getGb().weightx = 4;
 			windowUI.getGb().ipady = 400;
-			windowUI.getF().add(windowUI.getjPanel(), windowUI.getGb());
-			windowUI.getF().setVisible(true);
+			windowUI.getMainFrame().add(windowUI.getjPanel(), windowUI.getGb());
+			windowUI.getMainFrame().setVisible(true);
 			loadingDialogJFrame.dispose();
 
 			// 对于群名修改面板的组件改变
@@ -1069,7 +1106,7 @@ public class Main {
 						} else {
 							autoAddFriendFlag = true;
 							windowUI.getAddFriend()
-									.setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.ADD_FRIEND_ICON_NAME)));
+									.setIcon(new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
 							windowUI.getAddFriend().repaint();
 						}
 					} catch (Exception e2) {
@@ -1088,7 +1125,7 @@ public class Main {
 					} else {
 						autoReplyFlag = true;
 						windowUI.getReply()
-								.setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.REPLY_ICON_NAME)));
+								.setIcon(new ImageIcon(WindowUI.class.getResource("resource/reply.png")));
 						windowUI.getReply().repaint();
 					}
 				}
@@ -1103,7 +1140,7 @@ public class Main {
 						windowUI.getWarn().repaint();
 					} else {
 						sensitiveFlag = true;
-						windowUI.getWarn().setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.WARN_ICON_NAME)));
+						windowUI.getWarn().setIcon(new ImageIcon(WindowUI.class.getResource("resource/warn.png")));
 						windowUI.getWarn().repaint();
 					}
 				}
@@ -1286,7 +1323,7 @@ public class Main {
 
 				}
 			});
-			windowUI.getF().addWindowListener(new WindowListener() {
+			windowUI.getMainFrame().addWindowListener(new WindowListener() {
 				@Override
 				public void windowOpened(WindowEvent e) {
 

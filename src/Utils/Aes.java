@@ -1,8 +1,9 @@
 package Utils;
 
+import blade.kit.Base64;
+
 import java.security.Key;
 import java.security.MessageDigest;
-import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
@@ -54,7 +55,7 @@ public class Aes {
 			byte[] data = strContent.getBytes("UTF-8");
 			cipher.init(Cipher.ENCRYPT_MODE, key, iv);
 			byte[] encryptData = cipher.doFinal(data);
-			String encryptResult = new String(Base64.getEncoder().encode(encryptData), "UTF-8");
+			String encryptResult = new String(Base64.encodeBytes(encryptData));
 			return encryptResult;
 		} catch (Exception ex) {
 			throw new RuntimeException(ex.getMessage());

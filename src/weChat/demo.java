@@ -1,28 +1,41 @@
-﻿package weChat;
+package weChat;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by huzhejie on 2016/8/8.
  */
 public class demo {
-    private static List<String> id = new ArrayList<>();
     private static WindowUI windowUI;
     public static void main(String args[])throws Exception{
         windowUI = new WindowUI();
-        windowUI.getChatIn().setVisible(true);
-        windowUI.getSaveRecord().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(null, "信息以及保存成功!", "提示", JOptionPane.INFORMATION_MESSAGE);
-            }
-        });
+        windowUI.getMainFrame().setSize(400, 600);
+        windowUI.getGb().gridx = 0;
+        windowUI.getGb().gridy = 0;
+        windowUI.getGb().gridwidth = 0;
+        windowUI.getGb().gridheight = GridBagConstraints.BOTH;
+        windowUI.getGb().ipady = 100;
+        windowUI.getGb().ipadx = 480;
+        windowUI.getMainFrame().add(windowUI.getUserInfoJPanel(), windowUI.getGb());
+        windowUI.getjPanel().setLayout(new FlowLayout(FlowLayout.CENTER, 15, 20));
+        windowUI.getjPanel().add(windowUI.getjPanel_1());
+        windowUI.getjPanel().add(windowUI.getjPanel_2());
+        windowUI.getjPanel().add(windowUI.getjPanel_9());
+        windowUI.getjPanel().add(windowUI.getjPanel_3());
+        windowUI.getjPanel().add(windowUI.getjPanel_4());
+        windowUI.getjPanel().add(windowUI.getjPanel_5());
+        windowUI.getjPanel().add(windowUI.getjPanel_6());
+        windowUI.getjPanel().add(windowUI.getjPanel_7());
+        windowUI.getjPanel().add(windowUI.getjPanel_10());
+        windowUI.getjPanel().add(windowUI.getjPanel_11());
+        windowUI.getjPanel().add(windowUI.getjPanel_12());
+        windowUI.getjPanel().add(windowUI.getjPanel_8());
+        windowUI.getGb().gridx = 0;
+        windowUI.getGb().gridy = 1;
+        windowUI.getGb().weightx = 4;
+        windowUI.getGb().ipady = 400;
+        windowUI.getMainFrame().add(windowUI.getjPanel(), windowUI.getGb());
+        windowUI.getMainFrame().setVisible(true);
     }
 }
