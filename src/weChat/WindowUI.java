@@ -4,6 +4,7 @@ import Models.TipRecord;
 import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
 import org.jb2011.lnf.beautyeye.ch2_tab.BETabbedPaneUI;
 import org.jb2011.lnf.beautyeye.ch3_button.BEButtonUI;
+import org.jb2011.lnf.beautyeye.ch6_textcoms.BETextAreaUI;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -36,6 +37,7 @@ public class WindowUI {
     private static JFrame groupInvite = null;
     private static JFrame groupRemove = null;
     private static JFrame setFrame = null;
+    private static JFrame loginFrame = null;
     private static JButton chatJButton = new JButton(new ImageIcon(WindowUI.class.getResource("resource/chat.png")));
     private static JButton addFriend = new JButton(new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
     private static JButton signRecord = new JButton(new ImageIcon(WindowUI.class.getResource("resource/sign_record.png")));
@@ -60,6 +62,7 @@ public class WindowUI {
     private static JPanel showGroupPanel = new JPanel();
     private static JPanel invitePanel = new JPanel();
     private static JPanel removePanel = new JPanel();
+    private static JPanel loginPanel  = new JPanel();
     private static JTabbedPane setPanel = new JTabbedPane(JTabbedPane.LEFT);
     private static JPanel emptyPanel = new JPanel();
     private static JPanel setGroupNamePanel = new JPanel();
@@ -74,6 +77,8 @@ public class WindowUI {
     private static JLabel tuLing = new JLabel("图灵机器人 key:");//存放图灵key
     private static JLabel userNameLabel = new JLabel();//存放用户名字
     private static JLabel userHeaderImg = new JLabel();//存放用户头像
+    private static JLabel robotUserName = new JLabel("用户名：");
+    private static JLabel robotUserPasswd = new JLabel("密码：");
     private static JLabel jLabel_0 = new JLabel();//存放二维码
     private static JPanel jPanel_1 = new JPanel();//存放检查群消息按钮
     private static JPanel jPanel_2 = new JPanel();//好友自动通过
@@ -95,15 +100,20 @@ public class WindowUI {
     private static JList jList3 =null;
     private static JList jList4 = null;
     private static JTextPane jTextPane = new JTextPane();
-    private static JTextArea timeArea = new JTextArea();
-    private static JTextArea propertyArea = new JTextArea();
+    private static JTextArea timeArea = new JTextArea();//定时发送的时间
+    private static JTextArea propertyArea = new JTextArea();//定时发送的内容
     private static JTextArea tulingKeyArea = new JTextArea();//存放图灵key
+    private static JTextArea userNameArea = new JTextArea();//输入机器人的用户名
+    private static JTextArea userPasswdArea = new JTextArea();//输入机器人的密码
     private static JComboBox groupNameArea = new JComboBox();//定时发送中选择群名的选择框
     private static JButton addTipButton = new JButton("添加定时消息发送");
     private static JButton saveRecord = new JButton("保存消息到本地");
     private static JButton seeRecord = new JButton("查看本地消息");
     private static JButton remove = new JButton("踢出该群");
     private static JButton invite = new JButton("邀请进群");
+    private static JButton login = new JButton("立即登录");
+    private static JButton log = new JButton("登录");
+    private static JButton register = new JButton("注册");
     private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
     private static GridBagConstraints gb = new GridBagConstraints();
     private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
@@ -125,7 +135,8 @@ public class WindowUI {
             chooseGroup =new JFrame("微信机器人--群列表");
             groupInvite = new JFrame("微信机器人--邀请进群");
             groupRemove = new JFrame("微信机器人--踢人出群");
-            setFrame= new JFrame("设置");
+            setFrame= new JFrame("微信机器人--设置");
+            loginFrame = new JFrame("微信机器人--登录");
 
 
 
@@ -197,15 +208,24 @@ public class WindowUI {
             setFrame.setResizable(false);
             setFrame.setDefaultCloseOperation(setFrame.HIDE_ON_CLOSE);
             setFrame.setSize(800,700);
-            emptyPanel.setSize(800,700);
+            emptyPanel.setSize(800,700);//用来覆盖原先frame的contentPane的全透明效果
             setFrame.getContentPane().add(emptyPanel);
             emptyPanel.setLayout(new BorderLayout());
             emptyPanel.add(BorderLayout.CENTER,setPanel);
 
+            loginFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 200, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 200);
+            loginFrame.setVisible(false);
+            loginFrame.setResizable(false);
+            loginFrame.setDefaultCloseOperation(loginFrame.HIDE_ON_CLOSE);
+            loginFrame.setSize(400,350);
+            loginFrame.add(loginPanel);
+
             //主界面按钮的UI设置
-            userInfoJPanel.setLayout(new FlowLayout(FlowLayout.CENTER,50,20));
+            userInfoJPanel.setLayout(new FlowLayout(FlowLayout.LEFT,30,20));
             userInfoJPanel.setBackground(Color.lightGray);
-            userInfoJPanel.setBorder(null);
+            userInfoJPanel.setBorder(BorderFactory.createEmptyBorder(0,20,0,20));
+            login.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+            login.setForeground(Color.white);
             chatJButton.setBorder(null);
             chatJButton.setFocusPainted(false);
             addFriend.setBorder(null);
@@ -413,8 +433,25 @@ public class WindowUI {
             setPanel.add("修改群名",setGroupNameJScrollPane);
             setPanel.add("修改图灵key",setTuLingAPIPanel);
 
-
-
+            log.setSize(100,100);
+            log.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
+            log.setForeground(Color.white);
+            register.setSize(100,100);
+            register.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+            register.setForeground(Color.white);
+            loginPanel.setLayout(new FlowLayout(FlowLayout.CENTER,50,30));
+            userNameArea.setUI(new BETextAreaUI());
+            userNameArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0,0,0,0),"用户名:"));
+            loginPanel.add(userNameArea);
+            userNameArea.setLineWrap(true);
+            userNameArea.setSize(300,150);
+            userPasswdArea.setUI(new BETextAreaUI());
+            userPasswdArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0,0,0,0),"密码:"));
+            loginPanel.add(userPasswdArea);
+            userPasswdArea.setLineWrap(true);
+            userPasswdArea.setSize(300,150);
+            loginPanel.add(log);
+            loginPanel.add(register);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -1111,5 +1148,85 @@ public class WindowUI {
 
     public static void setSetGroupNameJScrollPane(JScrollPane setGroupNameJScrollPane) {
         WindowUI.setGroupNameJScrollPane = setGroupNameJScrollPane;
+    }
+
+    public static JFrame getLoginFrame() {
+        return loginFrame;
+    }
+
+    public static void setLoginFrame(JFrame loginFrame) {
+        WindowUI.loginFrame = loginFrame;
+    }
+
+    public static JPanel getLoginPanel() {
+        return loginPanel;
+    }
+
+    public static void setLoginPanel(JPanel loginPanel) {
+        WindowUI.loginPanel = loginPanel;
+    }
+
+    public static JPanel getEmptyPanel() {
+        return emptyPanel;
+    }
+
+    public static void setEmptyPanel(JPanel emptyPanel) {
+        WindowUI.emptyPanel = emptyPanel;
+    }
+
+    public static JLabel getTuLing() {
+        return tuLing;
+    }
+
+    public static void setTuLing(JLabel tuLing) {
+        WindowUI.tuLing = tuLing;
+    }
+
+    public static JLabel getRobotUserName() {
+        return robotUserName;
+    }
+
+    public static void setRobotUserName(JLabel robotUserName) {
+        WindowUI.robotUserName = robotUserName;
+    }
+
+    public static JLabel getRobotUserPasswd() {
+        return robotUserPasswd;
+    }
+
+    public static void setRobotUserPasswd(JLabel robotUserPasswd) {
+        WindowUI.robotUserPasswd = robotUserPasswd;
+    }
+
+    public static JTextArea getTulingKeyArea() {
+        return tulingKeyArea;
+    }
+
+    public static void setTulingKeyArea(JTextArea tulingKeyArea) {
+        WindowUI.tulingKeyArea = tulingKeyArea;
+    }
+
+    public static JTextArea getUserNameArea() {
+        return userNameArea;
+    }
+
+    public static void setUserNameArea(JTextArea userNameArea) {
+        WindowUI.userNameArea = userNameArea;
+    }
+
+    public static JTextArea getUserPasswdArea() {
+        return userPasswdArea;
+    }
+
+    public static void setUserPasswdArea(JTextArea userPasswdArea) {
+        WindowUI.userPasswdArea = userPasswdArea;
+    }
+
+    public static JButton getLogin() {
+        return login;
+    }
+
+    public static void setLogin(JButton login) {
+        WindowUI.login = login;
     }
 }

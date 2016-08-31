@@ -130,8 +130,8 @@ public class Main {
 	 * 图灵机器人智能聊天
 	 * @param content 聊天内容
 	 * @param userId  用户ID
-     * @return  回复内容
-     */
+	 * @return  回复内容
+	 */
 	private String aiChat(String content, String userId) {
 		final String apiUrl = "http://www.tuling123.com/openapi/api";
 		final String apiKey = "49d5dd04005a4d82b7d5bc30dae96821"; //apikey
@@ -190,22 +190,22 @@ public class Main {
 			int code = responseJson.getInt("code");
 			String text = responseJson.getString("text"); // ???????????????????????
 			switch (code) {
-			case 100000: // ??????
-				response.append(text);
-				break;
-			case 200000: // ???????
-				response.append("该功能暂时不开放");
-				break;
-			case 302000: // ???????
-				response.append("该功能暂时不开放");
-				break;
-			case 308000: // ???????
-				response.append("该功能暂时不开放");
-				break;
-			default:
-				System.out.println(text);
-				response.append("智能聊天存在故障，请稍后重试。");
-				break;
+				case 100000: // ??????
+					response.append(text);
+					break;
+				case 200000: // ???????
+					response.append("该功能暂时不开放");
+					break;
+				case 302000: // ???????
+					response.append("该功能暂时不开放");
+					break;
+				case 308000: // ???????
+					response.append("该功能暂时不开放");
+					break;
+				default:
+					System.out.println(text);
+					response.append("智能聊天存在故障，请稍后重试。");
+					break;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -218,7 +218,7 @@ public class Main {
 	/**
 	 * 读取词库文件
 	 * @throws Exception
-     */
+	 */
 	private void readFiles() throws Exception {
 		String s[] = null;
 		File public_file = new File("公开.txt");
@@ -254,7 +254,7 @@ public class Main {
 	/**
 	 * 生成DeviceID
 	 * @return DeviceID
-     */
+	 */
 	private String produceDevID() {
 		Random rm = new Random();
 
@@ -269,7 +269,7 @@ public class Main {
 	 * 生成二维码的url
 	 * @param s 为uuid
 	 * @return  生成二维码的url
-     */
+	 */
 	private String produceErWei(String s) {
 		s = "http://login.weixin.qq.com/qrcode/" + s;
 		return s;
@@ -278,7 +278,7 @@ public class Main {
 	/**
 	 * SyncKey转换
 	 * @param s 转换前的包含synckey的json数据
-     */
+	 */
 	private void syncKeyTransfer(String s) {
 		JSONObject fr = JSONObject.fromObject(s);
 		syncKey = fr.getJSONObject("SyncKey");
@@ -295,7 +295,7 @@ public class Main {
 
 	/**
 	 * 自动通过好友验证
-     */
+	 */
 	private void addFriend() {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxverifyuser?r=" + System.currentTimeMillis()
 				+ "&lang=zh_CN&pass_ticket=" + pass_ticket;
@@ -318,15 +318,16 @@ public class Main {
 	/**
 	 * 检查消息是否有更新
 	 * 并对消息类别进行分类（如好友验证，图片消息，文字消息等）
-     */
+	 */
 	private void checkMsg() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
-		String url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?skey=" + skey + "&sid=" + wxsid
+		String url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?r="+timeStamp+"&skey=" + skey + "&sid=" + wxsid
 				+ "&uin=" + wxuin + "&deviceid=" + DeviceID + "&synckey=" + syncKeyList.toString() + "&_=" + timeStamp;
 		String s = HttpRequest.get(url).header("Cookie", header).body();
 
 		int retcode = Integer.parseInt(s.substring(s.indexOf('"') + 1, s.indexOf(',') - 1));
 		int selector = Integer.parseInt(s.substring(s.lastIndexOf(":\"") + 2, s.lastIndexOf('"')));
+
 
 		if (s.lastIndexOf('0') != s.length() - 3) { // 如果selector不为0，则获取最新消息
 			url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxsync?sid=" + wxsid + "&skey=" + skey
@@ -394,108 +395,106 @@ public class Main {
 
 					// 对不同类型的消息进行处理
 					switch (msgType) {
-					case 1: // 文本消息
+						case 1: // 文本消息
 
-						if (!"".equals(groupID)) { // 来自群聊的消息
-							boolean matchKeyword = false; // 标识是否已经匹配到了关键词
+							if (!"".equals(groupID)) { // 来自群聊的消息
+								boolean matchKeyword = false; // 标识是否已经匹配到了关键词
 
-							// 如果开启了自动回复
-							if (autoReplyFlag) {
-								for (String keyword : publicReply.keySet()) // 匹配公共关键词
-									if (content.contains(keyword)) {
-										replyInGroupContent = to + " 您好，" + publicReply.get(keyword);
-										replyMsg(replyInGroupContent, groupID);
-										matchKeyword = true;
-										break;
-									}
-
-								if (!matchKeyword) // 公共关键词匹配失败，匹配私密关键词
-									for (String keyword : privateReply.keySet())
+								// 如果开启了自动回复
+								if (autoReplyFlag) {
+									for (String keyword : publicReply.keySet()) // 匹配公共关键词
 										if (content.contains(keyword)) {
-											replyInGroupContent = to + " 您好，信息已私信回复您，谢谢！";
+											replyInGroupContent = to + " 您好，" + publicReply.get(keyword);
 											replyMsg(replyInGroupContent, groupID);
-											replyToMemberContent = privateReply.get(keyword);
-											replyMsg(replyToMemberContent, memberID);
 											matchKeyword = true;
 											break;
 										}
 
-								if (!matchKeyword) { // 关键词匹配失败，智能回复
-									replyInGroupContent = to + " 您好，" + aiChat(content, memberID);
-									replyMsg(replyInGroupContent, groupID);
-								}
-							}
+									if (!matchKeyword) // 公共关键词匹配失败，匹配私密关键词
+										for (String keyword : privateReply.keySet())
+											if (content.contains(keyword)) {
+												replyInGroupContent = to + " 您好，信息已私信回复您，谢谢！";
+												replyMsg(replyInGroupContent, groupID);
+												replyToMemberContent = privateReply.get(keyword);
+												replyMsg(replyToMemberContent, memberID);
+												matchKeyword = true;
+												break;
+											}
 
-							// 如果开启了敏感词警告
-							if (sensitiveFlag)
-								for (String senseWord : senseReply) {
-									if (content.contains(senseWord)) {
-										replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
+									if (!matchKeyword) { // 关键词匹配失败，智能回复
+										replyInGroupContent = to + " 您好，" + aiChat(content, memberID);
 										replyMsg(replyInGroupContent, groupID);
-										matchKeyword = true;
-										break;
 									}
 								}
 
-							groupID = "";
-						} else if (!userID.equals(fromId)) { // 来自好友的消息
-							replyToMemberContent = aiChat(content, fromId);
-							replyMsg(replyToMemberContent, fromId);
-						}
-						break;
-					case 3: // 图片消息
-						url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID=" + msgID + "&skey="
-								+ skey + "&type=slave";
-						ImageIcon image = new ImageIcon(HttpRequest.get(url).bytes());
-						windowUI.getjTextPane().setCaretPosition(0);
-						windowUI.getjTextPane().insertIcon(image);
-						content = "\n";
-						break;
-					case 34: // 语音消息
-						System.out.println(jsonObject1);
-						content = null;
-						break;
-					case 37: // 好友请求消息
-						if (autoAddFriendFlag)
-							addFriend();
-						content = null;
-						break;
-					case 40: // 疑似朋友消息
-						System.out.println(jsonObject1);
-						content = null;
-						break;
-					case 47: // emoji表情消息
-						System.out.println(jsonObject1);
-						content = null;
-						break;
-					case 51: // 状态提醒消息
-						String[] statusNotifyUserNames = jsonObject1.getString("StatusNotifyUserName").split(","); // 获取不在联系人列表里的群聊
-						if (statusNotifyUserNames.length > 1) { // 如果需要提醒的用户多于1个，说明是群聊列表
-							content = null;
-							if (!hasNotified) {
-								for (String statusNotifyUserName : statusNotifyUserNames)
-									if (statusNotifyUserName.startsWith("@@")
-											&& !activeGroupId.contains(statusNotifyUserName)
-											&& !unactiveGroupId.contains(statusNotifyUserName))
-										unactiveGroupId.add(statusNotifyUserName);
-								getGroupList();
+								// 如果开启了敏感词警告
+								if (sensitiveFlag)
+									for (String senseWord : senseReply) {
+										if (content.contains(senseWord)) {
+											replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
+											replyMsg(replyInGroupContent, groupID);
+											matchKeyword = true;
+											break;
+										}
+									}
+							} else if (!userID.equals(fromId)) { // 来自好友的消息
+								replyToMemberContent = aiChat(content, fromId);
+								replyMsg(replyToMemberContent, fromId);
 							}
-							hasNotified = true;
-						} else // 否则说明不是群聊列表，而是打开了一个会话或者特殊账号发了信息
-							content = "[会话]";
-						break;
-					case 9999: // 系统提示信息
-						System.out.println(jsonObject1);
-						content = null;
-						break;
-					case 10000: // 系统消息
-						System.out.println(jsonObject1);
-						content = null;
-						break;
-					case 10002: // 撤回消息
-						System.out.println(jsonObject1);
-						content = null;
-						break;
+							break;
+						case 3: // 图片消息
+							url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID=" + msgID + "&skey="
+									+ skey + "&type=slave";
+							ImageIcon image = new ImageIcon(HttpRequest.get(url).bytes());
+							windowUI.getjTextPane().setCaretPosition(0);
+							windowUI.getjTextPane().insertIcon(image);
+							content = "\n";
+							break;
+						case 34: // 语音消息
+							System.out.println(jsonObject1);
+							content = null;
+							break;
+						case 37: // 好友请求消息
+							if (autoAddFriendFlag)
+								addFriend();
+							content = null;
+							break;
+						case 40: // 疑似朋友消息
+							System.out.println(jsonObject1);
+							content = null;
+							break;
+						case 47: // emoji表情消息
+							System.out.println(jsonObject1);
+							content = null;
+							break;
+						case 51: // 状态提醒消息
+							String[] statusNotifyUserNames = jsonObject1.getString("StatusNotifyUserName").split(","); // 获取不在联系人列表里的群聊
+							if (statusNotifyUserNames.length > 1) { // 如果需要提醒的用户多于1个，说明是群聊列表
+								content = null;
+								if (!hasNotified) {
+									for (String statusNotifyUserName : statusNotifyUserNames)
+										if (statusNotifyUserName.startsWith("@@")
+												&& !activeGroupId.contains(statusNotifyUserName)
+												&& !unactiveGroupId.contains(statusNotifyUserName))
+											unactiveGroupId.add(statusNotifyUserName);
+									getGroupList();
+								}
+								hasNotified = true;
+							} else // 否则说明不是群聊列表，而是打开了一个会话或者特殊账号发了信息
+								content = "[会话]";
+							break;
+						case 9999: // 系统提示信息
+							System.out.println(jsonObject1);
+							content = null;
+							break;
+						case 10000: // 系统消息
+							System.out.println(jsonObject1);
+							content = null;
+							break;
+						case 10002: // 撤回消息
+							System.out.println(jsonObject1);
+							content = null;
+							break;
 					}
 
 					// 保存消息记录
@@ -514,6 +513,7 @@ public class Main {
 									recordList.add(df.format(new Date()) + "," + from + " 群," + to + "," + content);
 									content = df.format(new Date()) + "\n" + from + " 群中 " + to + " 说:" + content
 											+ "\n";
+									groupID = "";
 								}
 							}
 							doc.insertString(0, content, windowUI.getAttributeSet());
@@ -548,7 +548,7 @@ public class Main {
 	 * 回复消息
 	 * @param s   回复的内容
 	 * @param id  回复对象的ID
-     */
+	 */
 	private void replyMsg(String s, String id) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxsendmsg?lang=zh_CN&pass_ticket=" + pass_ticket;
 		js.clear();
@@ -577,7 +577,7 @@ public class Main {
 	 *
 	 * @param addUserID  用户ID
 	 * @param addGroupID 邀请用户进群的ID
-     */
+	 */
 	private void addMember(String addUserID, String addGroupID) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
 		JSONObject jsonObject = new JSONObject();
@@ -595,7 +595,7 @@ public class Main {
 	 * 将用户T出该群
 	 * @param UserID  用户ID
 	 * @param GroupID  群ID
-     */
+	 */
 	private void deleteMember(String UserID, String GroupID) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
 		JSONObject jsonObject = new JSONObject();
@@ -616,7 +616,6 @@ public class Main {
 	 *            群id
 	 * @param newChatroomName
 	 *            新的群名
-	 * @return 修改成功true，否则false
 	 */
 	private void modifyChatroomName(String chatroomUserName, String newChatroomName) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
@@ -635,7 +634,7 @@ public class Main {
 
 	/**
 	 * 得到最近联系人的名单
-     */
+	 */
 	private void getRecentList() {
 		// jTextArea.setText("");
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=zh_CN&pass_ticket=" + pass_ticket + "&r="
@@ -661,7 +660,7 @@ public class Main {
 
 	/**
 	 * 获取skey，wxsid，wxuid等key
-     */
+	 */
 	private void produceKey() {
 		String s = this.sendGetRequest(url);
 		List<String> l = httpRequest.getConnection().getHeaderFields().get("Set-Cookie");
@@ -672,23 +671,21 @@ public class Main {
 			}
 		}
 		header = header.substring(4);// 去掉null
-		if (s.contains("<message>OK</message>")) {
-			skey = s.substring(s.indexOf("<skey>"), s.indexOf("</skey>"));
-			skey = skey.replace("<skey>", "").trim();
-			// skey = URLEncoder.encode(skey,"gbk");
-			wxsid = s.substring(s.indexOf("<wxsid>"), s.indexOf("</wxsid>"));
-			wxsid = wxsid.replace("<wxsid>", "").trim();
-			wxuin = s.substring(s.indexOf("<wxuin>"), s.indexOf("</wxuin>"));
-			wxuin = wxuin.replace("<wxuin>", "").trim();
-			pass_ticket = s.substring(s.indexOf("<pass_ticket>"), s.indexOf("</pass_ticket>"));
-			pass_ticket = pass_ticket.replace("<pass_ticket>", "").trim();
-			// pass_ticket = URLEncoder.encode(pass_ticket,"gbk");
-		}
+		skey = s.substring(s.indexOf("<skey>"), s.indexOf("</skey>"));
+		skey = skey.replace("<skey>", "").trim();
+		// skey = URLEncoder.encode(skey,"gbk");
+		wxsid = s.substring(s.indexOf("<wxsid>"), s.indexOf("</wxsid>"));
+		wxsid = wxsid.replace("<wxsid>", "").trim();
+		wxuin = s.substring(s.indexOf("<wxuin>"), s.indexOf("</wxuin>"));
+		wxuin = wxuin.replace("<wxuin>", "").trim();
+		pass_ticket = s.substring(s.indexOf("<pass_ticket>"), s.indexOf("</pass_ticket>"));
+		pass_ticket = pass_ticket.replace("<pass_ticket>", "").trim();
+		// pass_ticket = URLEncoder.encode(pass_ticket,"gbk");
 	}
 
 	/**
 	 * 初始化微信
-     */
+	 */
 	private void initWeChat() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxinit?pass_ticket=" + pass_ticket;
@@ -732,7 +729,7 @@ public class Main {
 
 	/**
 	 * 获取所有群列表
-     */
+	 */
 	private void getGroupList() {
 		// jTextArea.setText("");
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?type=ex&r=" + timeStamp
@@ -778,7 +775,7 @@ public class Main {
 	/**
 	 * 显示二维码
 	 * @param url 二维码获取地址
-     */
+	 */
 	private void showPic(String url) {
 		ImageIcon image = new ImageIcon(HttpRequest.get(url).bytes());
 		if (updatePic) {
@@ -795,7 +792,7 @@ public class Main {
 
 	/**
 	 * 获取用户头像
-     */
+	 */
 	private void getHeaderImg() {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgeticon?username=" + userID + "&skey=" + skey;
 		ImageIcon image = new ImageIcon(HttpRequest.get(url).header("Cookie", header).bytes());
@@ -805,12 +802,13 @@ public class Main {
 		windowUI.setUserNameLabel(new JLabel("用户名：" + userName));
 		windowUI.getUserNameLabel().setFont(new Font("黑体", 1, 16));
 		windowUI.getUserInfoJPanel().add(windowUI.getUserNameLabel());
+		windowUI.getUserInfoJPanel().add(windowUI.getLogin());
 	}
 
 	/**
 	 * 获取uuid
 	 * @return uuid
-     */
+	 */
 	private String produceUuid() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
 		url = "https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&fun=new&lang=zh_CN&_=" + timeStamp;// request??????
@@ -861,6 +859,7 @@ public class Main {
 		loadingDialogJFrame = new LoadingDialogJFrame("载入二维码...");
 		System.setProperty("jsse.enableSNIExtension", "false"); // 设置该属性，避免出现unrecognized_name异常
 		System.setProperty("https.protocols", "TLSv1"); // 设置协议为TLSv1，与服务器对应，避免出现与服务器断连的异常
+		//System.setProperty("javax.net.debug","ssl");
 
 		final Main htmlUnit = new Main();
 		try {
@@ -927,12 +926,12 @@ public class Main {
 			htmlUnit.readFiles();
 			windowUI.getjPanel().remove(windowUI.getjLabel_0());
 			windowUI.getMainFrame().remove(windowUI.getjPanel());
-			windowUI.getMainFrame().setSize(400, 600);
+			windowUI.getMainFrame().setSize(400, 700);
 			windowUI.getGb().gridx = 0;
 			windowUI.getGb().gridy = 0;
 			windowUI.getGb().gridwidth = 0;
 			windowUI.getGb().gridheight = GridBagConstraints.BOTH;
-			windowUI.getGb().ipady = 100;
+			windowUI.getGb().ipady = 200;
 			windowUI.getGb().ipadx = 480;
 			windowUI.getMainFrame().add(windowUI.getUserInfoJPanel(), windowUI.getGb());
 			windowUI.getjPanel().setLayout(new FlowLayout(FlowLayout.CENTER, 15, 20));
@@ -951,10 +950,17 @@ public class Main {
 			windowUI.getGb().gridx = 0;
 			windowUI.getGb().gridy = 1;
 			windowUI.getGb().weightx = 4;
-			windowUI.getGb().ipady = 400;
+			windowUI.getGb().ipady = 500;
 			windowUI.getMainFrame().add(windowUI.getjPanel(), windowUI.getGb());
 			windowUI.getMainFrame().setVisible(true);
 			loadingDialogJFrame.dispose();
+			windowUI.getLogin().addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if(!windowUI.getLoginFrame().isVisible())
+						windowUI.getLoginFrame().setVisible(true);
+				}
+			});
 
 			// 对于群名修改面板的组件改变
 			for (final GroupInfo group : groupInfoList) {
@@ -988,6 +994,7 @@ public class Main {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					windowUI.getInviteIntoGroup().setEnabled(false);
 					Vector<String> group = new Vector<>();
 					Vector<String> friend = new Vector<>();
 					for (int i = 0; i < groupInfoList.size(); i++)
@@ -1047,6 +1054,7 @@ public class Main {
 			windowUI.getRemoveFromGroup().addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					windowUI.getRemoveFromGroup().setEnabled(false);
 					Vector<String> group = new Vector<>();
 					for (int i = 0; i < groupInfoList.size(); i++) {
 						group.add(groupInfoList.get(i).getGroupName());
@@ -1204,6 +1212,7 @@ public class Main {
 			windowUI.getShowGroupList().addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					windowUI.getShowGroupList().setEnabled(false);
 					if (windowUI.getShowGroupPanel().getComponentCount() == 0) {
 						for (final GroupInfo groupInfo : groupInfoList) {
 							final JCheckBox jc = new JCheckBox(groupInfo.getGroupName());
@@ -1243,22 +1252,21 @@ public class Main {
 				public void actionPerformed(ActionEvent e) {
 					try {
 						File record = new File(userName + "_群聊天记录.csv");
-						FileOutputStream out = null;
-						if (!record.exists()) {
+						if(!record.exists())
 							record.createNewFile();
-							String title = "时间,群名/发起人,群成员/接收人,内容\r\n";
-							out = new FileOutputStream(record);
+						FileOutputStream out = new FileOutputStream(record,true);
 
+						if(record.length()==0) {
 							// 添加utf-8的bom头，避免office乱码
-							byte[] utf8_bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+							byte[] utf8_bom = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
 							out.write(utf8_bom);
-
-							out.write(title.getBytes());
-							for (String r : recordList)
-								out.write((r + "\r\n").getBytes());
-							out.flush();
-							out.close();
+							out.write("时间,群名/发起人,群成员/接收人,内容\r\n".getBytes());
 						}
+						for (String r : recordList)
+							out.write((r + "\r\n").getBytes());
+						out.flush();
+						out.close();
+
 						loadingDialogJFrame.setSuccessText("记录已保存到当前目录下，请查看！");
 						recordList.clear();
 					} catch (IOException e1) {
@@ -1343,6 +1351,80 @@ public class Main {
 
 				}
 			});
+			windowUI.getGroupInvite().addWindowListener(new WindowListener() {
+				@Override
+				public void windowOpened(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowClosing(WindowEvent e) {
+					windowUI.getInviteIntoGroup().setEnabled(true);
+					windowUI.getGroupInvite().setVisible(false);
+				}
+
+				@Override
+				public void windowClosed(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowIconified(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowDeiconified(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowActivated(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowDeactivated(WindowEvent e) {
+
+				}
+			});
+			windowUI.getGroupRemove().addWindowListener(new WindowListener() {
+				@Override
+				public void windowOpened(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowClosing(WindowEvent e) {
+					windowUI.getRemoveFromGroup().setEnabled(true);
+					windowUI.getGroupRemove().setVisible(false);
+				}
+
+				@Override
+				public void windowClosed(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowIconified(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowDeiconified(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowActivated(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowDeactivated(WindowEvent e) {
+
+				}
+			});
 			windowUI.getMainFrame().addWindowListener(new WindowListener() {
 				@Override
 				public void windowOpened(WindowEvent e) {
@@ -1357,6 +1439,43 @@ public class Main {
 
 				@Override
 				public void windowClosed(WindowEvent e) {
+				}
+
+				@Override
+				public void windowIconified(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowDeiconified(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowActivated(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowDeactivated(WindowEvent e) {
+
+				}
+			});
+			windowUI.getChooseGroup().addWindowListener(new WindowListener() {
+				@Override
+				public void windowOpened(WindowEvent e) {
+
+				}
+
+				@Override
+				public void windowClosing(WindowEvent e) {
+					windowUI.getShowGroupList().setEnabled(true);
+					windowUI.getChooseGroup().setVisible(false);
+				}
+
+				@Override
+				public void windowClosed(WindowEvent e) {
+
 				}
 
 				@Override
@@ -1430,6 +1549,7 @@ public class Main {
 
 				@Override
 				public void windowClosed(WindowEvent e) {
+					windowUI.getLocalWord().setEnabled(true);
 				}
 
 				@Override
@@ -1465,6 +1585,7 @@ public class Main {
 
 				@Override
 				public void windowClosed(WindowEvent e) {
+					windowUI.getSet().setEnabled(true);
 				}
 
 				@Override
