@@ -478,7 +478,7 @@ public class Main {
 											&& !activeGroupId.contains(statusNotifyUserName)
 											&& !unactiveGroupId.contains(statusNotifyUserName))
 										unactiveGroupId.add(statusNotifyUserName);
-								getRecentList();
+								getGroupList();
 							}
 							hasNotified = true;
 						} else // 否则说明不是群聊列表，而是打开了一个会话或者特殊账号发了信息
@@ -591,7 +591,11 @@ public class Main {
 		httpRequest.disconnect();
 	}
 
-	// 将用户踢出群
+	/**
+	 * 将用户T出该群
+	 * @param UserID  用户ID
+	 * @param GroupID  群ID
+     */
 	private void deleteMember(String UserID, String GroupID) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
 		JSONObject jsonObject = new JSONObject();
@@ -629,8 +633,10 @@ public class Main {
 		httpRequest.disconnect();
 	}
 
-	// 获取最近联系人列表
-	private void getList() {
+	/**
+	 * 得到最近联系人的名单
+     */
+	private void getRecentList() {
 		// jTextArea.setText("");
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=zh_CN&pass_ticket=" + pass_ticket + "&r="
 				+ System.currentTimeMillis() + "&seq=0&skey=" + skey;
@@ -653,7 +659,9 @@ public class Main {
 		}
 	}
 
-	// 生成key
+	/**
+	 * 获取skey，wxsid，wxuid等key
+     */
 	private void produceKey() {
 		String s = this.sendGetRequest(url);
 		List<String> l = httpRequest.getConnection().getHeaderFields().get("Set-Cookie");
@@ -678,7 +686,9 @@ public class Main {
 		}
 	}
 
-	// 初始化微信
+	/**
+	 * 初始化微信
+     */
 	private void initWeChat() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxinit?pass_ticket=" + pass_ticket;
@@ -720,8 +730,10 @@ public class Main {
 		this.getHeaderImg();
 	}
 
-	// 获取群列表(ChatRoomID)
-	private void getRecentList() {
+	/**
+	 * 获取所有群列表
+     */
+	private void getGroupList() {
 		// jTextArea.setText("");
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?type=ex&r=" + timeStamp
 				+ "&lang=zh_CN&pass_ticket=" + pass_ticket;
@@ -763,7 +775,10 @@ public class Main {
 		}
 	}
 
-	// 显示二维码
+	/**
+	 * 显示二维码
+	 * @param url 二维码获取地址
+     */
 	private void showPic(String url) {
 		ImageIcon image = new ImageIcon(HttpRequest.get(url).bytes());
 		if (updatePic) {
@@ -778,7 +793,9 @@ public class Main {
 		windowUI.getMainFrame().setSize(400, 400);
 	}
 
-	// 获取头像
+	/**
+	 * 获取用户头像
+     */
 	private void getHeaderImg() {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgeticon?username=" + userID + "&skey=" + skey;
 		ImageIcon image = new ImageIcon(HttpRequest.get(url).header("Cookie", header).bytes());
@@ -790,7 +807,10 @@ public class Main {
 		windowUI.getUserInfoJPanel().add(windowUI.getUserNameLabel());
 	}
 
-	// 获取uuid
+	/**
+	 * 获取uuid
+	 * @return uuid
+     */
 	private String produceUuid() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
 		url = "https://login.wx.qq.com/jslogin?appid=wx782c26e4c19acffb&fun=new&lang=zh_CN&_=" + timeStamp;// request??????
@@ -902,7 +922,7 @@ public class Main {
 			loadingDialogJFrame.setLoadingText("登录成功，正在初始化...");
 			htmlUnit.initWeChat();
 			loadingDialogJFrame.setLoadingText("初始化已完成，正在启动主程序...");
-			htmlUnit.getList();
+			htmlUnit.getRecentList();
 			htmlUnit.listenForMsg();
 			htmlUnit.readFiles();
 			windowUI.getjPanel().remove(windowUI.getjLabel_0());
