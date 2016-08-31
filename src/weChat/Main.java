@@ -41,7 +41,7 @@ public class Main {
 	private static Boolean autoAddFriendFlag = true; // 控制自动添加好友
 	private static Boolean autoReplyFlag = true; // 自动回复
 	private static Boolean sensitiveFlag = true; // 敏感词警告
-//	private static Boolean timerSendMsgFlag = true;// 控制定时发布
+	// private static Boolean timerSendMsgFlag = true;// 控制定时发布
 	private static String url;
 	private static String timeStamp;
 	private static String uuid;
@@ -91,12 +91,14 @@ public class Main {
 
 	private boolean hasNotified; // 标识是否已经获取了联系人列表之外的群聊
 
+	private static Thread checkForMsgThread; // 监听最新消息的线程
+
 	public Main() {
 		windowUI = new WindowUI();
 		doc = windowUI.getjTextPane().getDocument();
 		hasNotified = false;
 		try {
-			doc.insertString(doc.getLength(), "您已登陆成功，开始记录消息!\n", windowUI.getAttributeSet());
+			doc.insertString(0, "您已登陆成功，开始记录消息!\n", windowUI.getAttributeSet());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -292,10 +294,13 @@ public class Main {
 	// 检查消息更新
 	private void checkMsg() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
-		String url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?r=" + timeStamp + "&skey=" + skey
-				+ "&sid=" + wxsid + "&uin=" + wxuin + "&deviceid=" + DeviceID + "&synckey=" + syncKeyList.toString()
-				+ "&_=" + timeStamp;
+		String url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?skey=" + skey + "&sid=" + wxsid
+				+ "&uin=" + wxuin + "&deviceid=" + DeviceID + "&synckey=" + syncKeyList.toString() + "&_=" + timeStamp;
 		String s = HttpRequest.get(url).header("Cookie", header).body();
+
+		int retcode = Integer.parseInt(s.substring(s.indexOf('"') + 1, s.indexOf(',') - 1));
+		int selector = Integer.parseInt(s.substring(s.lastIndexOf(":\"") + 2, s.lastIndexOf('"')));
+
 		if (s.lastIndexOf('0') != s.length() - 3) { // 如果selector不为0，则获取最新消息
 			url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxsync?sid=" + wxsid + "&skey=" + skey
 					+ "&lang=zh_CN&pass_ticket=" + pass_ticket;
@@ -303,9 +308,9 @@ public class Main {
 			js.put("BaseRequest", baseRequest);
 			js.put("SyncKey", syncKey);
 			js.put("rr", ~System.currentTimeMillis());
-			s = this.sendPostRequest(url, js, header);
+			s = sendPostRequest(url, js, header);
 			syncKeyList = new StringBuffer();
-			this.syncKeyTransfer(s);
+			syncKeyTransfer(s);
 			JSONObject jsonObject = JSONObject.fromObject(s);
 			int count = jsonObject.getInt("AddMsgCount");
 			if (count != 0) {
@@ -415,7 +420,7 @@ public class Main {
 						url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID=" + msgID + "&skey="
 								+ skey + "&type=slave";
 						ImageIcon image = new ImageIcon(HttpRequest.get(url).bytes());
-						windowUI.getjTextPane().setCaretPosition(doc.getLength());
+						windowUI.getjTextPane().setCaretPosition(0);
 						windowUI.getjTextPane().insertIcon(image);
 						content = "\n";
 						break;
@@ -484,21 +489,22 @@ public class Main {
 											+ "\n";
 								}
 							}
-							doc.insertString(doc.getLength(), content, windowUI.getAttributeSet());
+							doc.insertString(0, content, windowUI.getAttributeSet());
 						}
 
 						if (replyInGroupContent != null) {
-							doc.insertString(doc.getLength(), df.format(new Date()) + "\n我在 " + from + " 群中对 " + to
-									+ " 说:" + replyInGroupContent + "\n", windowUI.getAttributeSet());
+							doc.insertString(0, df.format(new Date()) + "\n我在 " + from + " 群中对 " + to + " 说:"
+									+ replyInGroupContent + "\n", windowUI.getAttributeSet());
 							recordList.add(df.format(new Date()) + ",我" + "," + to + "(" + from + " 群)," + content);
 						}
 
 						if (replyToMemberContent != null) {
-							doc.insertString(doc.getLength(),
+							doc.insertString(0,
 									df.format(new Date()) + "\n我对 " + to + " 说:" + replyToMemberContent + "\n",
 									windowUI.getAttributeSet());
 							recordList.add(df.format(new Date()) + ",我" + "," + to + "," + content);
 						}
+						// windowUI.getjTextPane().paintImmediately(windowUI.getjTextPane().getBounds());
 					} catch (BadLocationException e) {
 						e.printStackTrace();
 					}
@@ -524,7 +530,7 @@ public class Main {
 
 		// 生成Msg
 		msg.put("ClientMsgId", cmId);
-		msg.put("Content", s);
+		msg.put("Content", s);// ??????
 		msg.put("FromUserName", userID);
 		msg.put("LocalID", cmId);
 		msg.put("ToUserName", id);
@@ -770,35 +776,35 @@ public class Main {
 	 * 开个线程监听最新消息
 	 */
 	private void listenForMsg() {
-		new Thread(new Runnable() {
+		checkForMsgThread = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				while (true) {
 					checkMsg();
-					if (tipRecordList.size()!=0)
-						for (int i = 0; i < tipRecordList.size(); i++) {
-							if (!tipRecordList.get(i).getFlag() && windowUI.getDf().format(new Date()).toString()
-									.equals(tipRecordList.get(i).getTime())) {
-								for (int j = 0; j < groupInfoList.size(); j++) {
-									if (groupInfoList.get(j).getGroupName()
-											.equals(tipRecordList.get(i).getGroupName())) {
-										tipGroupID = groupInfoList.get(j).getGroupID();
-										break;
-									}
+					for (int i = 0; i < tipRecordList.size(); i++) {
+						if (!tipRecordList.get(i).getFlag() && windowUI.getDf().format(new Date()).toString()
+								.equals(tipRecordList.get(i).getTime())) {
+							for (int j = 0; j < groupInfoList.size(); j++) {
+								if (groupInfoList.get(j).getGroupName().equals(tipRecordList.get(i).getGroupName())) {
+									tipGroupID = groupInfoList.get(j).getGroupID();
+									break;
 								}
-								replyMsg(tipRecordList.get(i).getProperty(), tipGroupID);
-								tipRecordList.get(i).setFlag(true);
 							}
+							replyMsg(tipRecordList.get(i).getProperty(), tipGroupID);
+							tipRecordList.get(i).setFlag(true);
 						}
+					}
 				}
 			}
-		}, "listenForMsg").start();
+		}, "listenForMsg");
+		checkForMsgThread.start();
 	}
 
 	public static void main(String[] args) {
 		loadingDialogJFrame = new LoadingDialogJFrame("载入二维码...");
-		System.setProperty("jsse.enableSNIExtension", "false");
+		System.setProperty("jsse.enableSNIExtension", "false"); // 设置该属性，避免出现unrecognized_name异常
+		System.setProperty("https.protocols", "TLSv1"); // 设置协议为TLSv1，与服务器对应，避免出现与服务器断连的异常
 
 		final Main htmlUnit = new Main();
 		try {
@@ -809,7 +815,7 @@ public class Main {
 				// uuid获取失败
 				if (s == null) {
 					System.out.println("uuid获取失败！");
-					loadingDialogJFrame.shutdown("程序启动失败！请重新启动！");
+					// loadingDialogJFrame.shutdown("程序启动失败！请重新启动！");
 					return;
 				}
 
@@ -1063,7 +1069,7 @@ public class Main {
 						} else {
 							autoAddFriendFlag = true;
 							windowUI.getAddFriend()
-									.setIcon(new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
+									.setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.ADD_FRIEND_ICON_NAME)));
 							windowUI.getAddFriend().repaint();
 						}
 					} catch (Exception e2) {
@@ -1082,7 +1088,7 @@ public class Main {
 					} else {
 						autoReplyFlag = true;
 						windowUI.getReply()
-								.setIcon(new ImageIcon(WindowUI.class.getResource("resource/reply.png")));
+								.setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.REPLY_ICON_NAME)));
 						windowUI.getReply().repaint();
 					}
 				}
@@ -1097,7 +1103,7 @@ public class Main {
 						windowUI.getWarn().repaint();
 					} else {
 						sensitiveFlag = true;
-						windowUI.getWarn().setIcon(new ImageIcon(WindowUI.class.getResource("resource/warn.png")));
+						windowUI.getWarn().setIcon(new ImageIcon(WindowUI.class.getResource(WindowUI.WARN_ICON_NAME)));
 						windowUI.getWarn().repaint();
 					}
 				}
@@ -1106,7 +1112,7 @@ public class Main {
 			windowUI.getSendByTime().addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-//					timerSendMsgFlag = true;
+					// timerSendMsgFlag = true;
 					windowUI.getSendByTime().setEnabled(false);
 					windowUI.getDailyTip().setVisible(true);
 					for (int i = 0; i < groupInfoList.size(); i++)
@@ -1180,23 +1186,26 @@ public class Main {
 				public void actionPerformed(ActionEvent e) {
 					try {
 						File record = new File(userName + "_群聊天记录.csv");
+						FileOutputStream out = null;
 						if (!record.exists()) {
 							record.createNewFile();
 							String title = "时间,群名/发起人,群成员/接收人,内容\r\n";
-							BufferedWriter bw = new BufferedWriter(new FileWriter(record, true));
-							bw.write(title);
-							bw.flush();
-							bw.close();
+							out = new FileOutputStream(record);
+
+							// 添加utf-8的bom头，避免office乱码
+							byte[] utf8_bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+							out.write(utf8_bom);
+
+							out.write(title.getBytes());
+							for (String r : recordList)
+								out.write((r + "\r\n").getBytes());
+							out.flush();
+							out.close();
 						}
-						BufferedWriter bw = new BufferedWriter(new FileWriter(new File(userName + "_群聊天记录.csv"), true));
-						for (String r : recordList) {
-							bw.write(r + "\r\n");
-						}
-						bw.flush();
-						bw.close();
-						JOptionPane.showMessageDialog(null, "信息已经保存成功!", "提示", JOptionPane.INFORMATION_MESSAGE);
+						loadingDialogJFrame.setSuccessText("记录已保存到当前目录下，请查看！");
+						recordList.clear();
 					} catch (IOException e1) {
-						e1.printStackTrace();
+						JOptionPane.showMessageDialog(null, "记录保存失败，请检查原因后重试！", "错误", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			});
@@ -1255,8 +1264,6 @@ public class Main {
 
 				@Override
 				public void windowClosed(WindowEvent e) {
-					windowUI.getChatIn().setVisible(false);
-					windowUI.getChatJButton().setEnabled(true);
 				}
 
 				@Override
@@ -1287,12 +1294,12 @@ public class Main {
 
 				@Override
 				public void windowClosing(WindowEvent e) {
+					checkForMsgThread.interrupt();
 					htmlUnit.exitWeChat();
 				}
 
 				@Override
 				public void windowClosed(WindowEvent e) {
-					htmlUnit.exitWeChat();
 				}
 
 				@Override
@@ -1323,18 +1330,14 @@ public class Main {
 
 				@Override
 				public void windowClosing(WindowEvent e) {
-//					timerSendMsgFlag = false;
+					// timerSendMsgFlag = false;
 					windowUI.getDailyTip().setVisible(false);
 					windowUI.getSendByTime().setEnabled(true);
-//					windowUI.getGroupNameArea().removeAllItems();
+					// windowUI.getGroupNameArea().removeAllItems();
 				}
 
 				@Override
 				public void windowClosed(WindowEvent e) {
-//					timerSendMsgFlag = false;
-					windowUI.getDailyTip().setVisible(false);
-					windowUI.getSendByTime().setEnabled(true);
-//					windowUI.getGroupNameArea().removeAllItems();
 				}
 
 				@Override
@@ -1370,7 +1373,6 @@ public class Main {
 
 				@Override
 				public void windowClosed(WindowEvent e) {
-					windowUI.getLocalWord().setEnabled(true);
 				}
 
 				@Override
@@ -1406,7 +1408,6 @@ public class Main {
 
 				@Override
 				public void windowClosed(WindowEvent e) {
-					windowUI.getSet().setEnabled(true);
 				}
 
 				@Override
@@ -1429,9 +1430,7 @@ public class Main {
 
 				}
 			});
-		} catch (
-
-		Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

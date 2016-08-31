@@ -4,46 +4,47 @@ package Models;
  * Created by huzhejie on 2016/8/8.
  */
 public class TipRecord {
-    private static Boolean flag;
-    private static String time;
-    private static String groupName;
-    private static String property;
-    public TipRecord(){
-        flag=false;
-        time = "";
-        groupName="";
-        property="";
-    }
+	private Boolean flag;
+	private String time;
+	private String groupName;
+	private String property;
 
-    public static Boolean getFlag() {
-        return flag;
-    }
+	public TipRecord() {
+		flag = false;
+		time = "";
+		groupName = "";
+		property = "";
+	}
 
-    public static void setFlag(Boolean flag) {
-        TipRecord.flag = flag;
-    }
+	public Boolean getFlag() {
+		return flag;
+	}
 
-    public static String getTime() {
-        return time;
-    }
+	public void setFlag(Boolean flag) {
+		this.flag = flag;
+	}
 
-    public static void setTime(String time) {
-        TipRecord.time = time;
-    }
+	public String getTime() {
+		return time;
+	}
 
-    public static String getGroupName() {
-        return groupName;
-    }
+	public void setTime(String time) {
+		this.time = time;
+	}
 
-    public static void setGroupName(String groupName) {
-        TipRecord.groupName = groupName;
-    }
+	public String getGroupName() {
+		return groupName;
+	}
 
-    public static String getProperty() {
-        return property;
-    }
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
 
-    public static void setProperty(String property) {
-        TipRecord.property = property;
-    }
+	public String getProperty() {
+		return property;
+	}
+
+	public void setProperty(String property) {
+		this.property = property;
+	}
 }

@@ -1,4 +1,4 @@
-package weChat;
+﻿package weChat;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

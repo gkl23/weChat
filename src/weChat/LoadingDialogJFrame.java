@@ -22,8 +22,11 @@ public class LoadingDialogJFrame extends JFrame {
 	private JLabel loadingImg; // 加载时的动态图片
 	private JLabel loadingLabel; // 加载时的提示文字
 
-	/*
+	/**
 	 * 加载界面时的对话框
+	 * 
+	 * @param loadingText
+	 *            加载时的提示文字
 	 */
 	public LoadingDialogJFrame(String loadingText) {
 		setUndecorated(true); // 去掉title框
@@ -33,7 +36,7 @@ public class LoadingDialogJFrame extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 
 		loadingImg = new JLabel();
-		loadingImg.setIcon(new ImageIcon(LoadingDialogJFrame.class.getResource("resource/chat.png")));
+		loadingImg.setIcon(new ImageIcon(LoadingDialogJFrame.class.getResource("/resource/loading_img.gif")));
 
 		loadingLabel = new JLabel(loadingText);
 
@@ -50,40 +53,22 @@ public class LoadingDialogJFrame extends JFrame {
 	}
 
 	/**
-	 * 弹出错误信息
+	 * 设置操作成功的提示文字
 	 * 
-	 * @param errMsg
-	 *            错误信息提示
+	 * @param successText
+	 *            提示文字
 	 */
-	public void showErrMsg(String errMsg) {
+	public void setSuccessText(String successText) {
 		if (!isVisible())
 			setVisible(true);
 		loadingImg.setVisible(false);
-		loadingLabel.setText(errMsg);
+		loadingLabel.setText(successText);
 		new Timer().schedule(new TimerTask() {
 
 			@Override
 			public void run() {
 				dispose();
 			}
-		}, 1 * 1000); // 1s后自动关闭对话框
-	}
-
-	/**
-	 * 程序启动失败，自动关闭
-	 */
-	public void shutdown(String tipText) {
-		if (!isVisible())
-			setVisible(true);
-		loadingImg.setVisible(false);
-		loadingLabel.setText(tipText);
-		new Timer().schedule(new TimerTask() {
-
-			@Override
-			public void run() {
-				dispose();
-				System.exit(0);
-			}
-		}, 3 * 1000); // 3s后自动关闭对话框
+		}, 2 * 1000); // 2s后自动关闭
 	}
 }
