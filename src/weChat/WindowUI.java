@@ -419,7 +419,7 @@ public class WindowUI {
             remove.setForeground(Color.white);
             jList4 = new JList();
 
-            setGroupNamePanel.setLayout(new GridLayout(0,3,20,0));
+            setGroupNamePanel.setLayout(new GridLayout(0,3,20,20));
             setTuLingAPIPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,50));
 //            setGroupNamePanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
             setGroupNameJScrollPane = new JScrollPane(setGroupNamePanel);

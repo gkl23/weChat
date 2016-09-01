@@ -619,7 +619,6 @@ public class Main {
 	 */
 	private void modifyChatroomName(String chatroomUserName, String newChatroomName) {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxupdatechatroom";
-
 		JSONObject baseRequest = new JSONObject();
 		baseRequest.put("BaseRequest", baseRequest);
 		baseRequest.put("ChatRoomName", chatroomUserName);
@@ -820,7 +819,9 @@ public class Main {
 		return s;
 	}
 
-	// 退出微信
+	/**
+	 * 退出微信
+     */
 	private void exitWeChat() {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxlogout?redirect=1&type=0&skey=" + skey;
 		HttpRequest.post(url).header("Cookie", header).send("sid=" + wxsid + "&uin=" + wxuin).body();
@@ -961,34 +962,40 @@ public class Main {
 						windowUI.getLoginFrame().setVisible(true);
 				}
 			});
-
-			// 对于群名修改面板的组件改变
-			for (final GroupInfo group : groupInfoList) {
-				final JLabel jLabel = new JLabel(group.getGroupName());
-				jLabel.setBorder(BorderFactory.createTitledBorder("原群名"));
-				final JTextArea jTextArea = new JTextArea();
-				jTextArea.setBorder(BorderFactory.createTitledBorder("新群名"));
-				jTextArea.setLineWrap(true);
-				JButton jButton = new JButton("修改群名");
-				jButton.setForeground(Color.white);
-				jButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
-				windowUI.getSetGroupNamePanel().add(jLabel);
-				windowUI.getSetGroupNamePanel().add(jTextArea);
-				windowUI.getSetGroupNamePanel().add(jButton);
-				jButton.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						if (!jTextArea.getText().equals("") || jTextArea.getText() != null) {
-							jLabel.setText(jTextArea.getText());
-							group.setGroupName(jTextArea.getText());
-							jTextArea.setText("");
-							htmlUnit.modifyChatroomName(group.getGroupID(), jTextArea.getText());
-						} else {
-							JOptionPane.showMessageDialog(new Frame(), "错误：新群名一栏不能为空", "错误", JOptionPane.ERROR_MESSAGE);
-						}
+            windowUI.getSet().addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// 对于群名修改面板的组件改变
+					for (final GroupInfo group : groupInfoList) {
+						final JLabel jLabel = new JLabel(group.getGroupName());
+						jLabel.setBorder(BorderFactory.createTitledBorder("原群名"));
+						final JTextArea jTextArea = new JTextArea();
+						jTextArea.setBorder(BorderFactory.createTitledBorder("新群名"));
+						jTextArea.setLineWrap(true);
+						JButton jButton = new JButton("修改群名");
+						jButton.setForeground(Color.white);
+						jButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+						windowUI.getSetGroupNamePanel().add(jLabel);
+						windowUI.getSetGroupNamePanel().add(jTextArea);
+						windowUI.getSetGroupNamePanel().add(jButton);
+						jButton.addActionListener(new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								if (!jTextArea.getText().equals("") || jTextArea.getText() != null) {
+									jLabel.setText(jTextArea.getText());
+									group.setGroupName(jTextArea.getText());
+									jTextArea.setText("");
+									htmlUnit.modifyChatroomName(group.getGroupID(), jTextArea.getText());
+									JOptionPane.showMessageDialog(null,"提示：群名修改成功","提示",JOptionPane.INFORMATION_MESSAGE);
+								} else {
+									JOptionPane.showMessageDialog(new Frame(), "错误：新群名一栏不能为空", "错误", JOptionPane.ERROR_MESSAGE);
+								}
+							}
+						});
 					}
-				});
-			}
+				}
+			});
+
 
 			windowUI.getInviteIntoGroup().addActionListener(new ActionListener() {
 
