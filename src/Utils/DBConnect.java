@@ -45,21 +45,22 @@ public class DBConnect {
             if(!connection.isClosed())
                 System.out.println("Succeeded connecting to the Database!");
         } catch(ClassNotFoundException e) {
-            System.out.println("Sorry,can`t find the Driver!");             e.printStackTrace();
+            System.out.println("Sorry,can`t find the Driver!");
+            e.printStackTrace();
         } catch(SQLException e) {
             e.printStackTrace();
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
-    public void addTable(String userName)throws SQLException{
+    public Boolean checkLogin(String userName,String passWord)throws SQLException{
         statement = connection.createStatement();
-        String sql = "create table "+userName+"_sign(userName varchar(255),groupName varchar(255),time timestamp DEFAULT CURRENT_TIMESTAMP,id INT PRIMARY KEY AUTO_INCREMENT);";
-        statement.execute(sql);
+        String sql = "SELECT * FROM userInfo WHERE userName = userName AND passWord = passWord";
+        return statement.execute(sql);
     }
-    public void insertRegisterRecord(String userName,String groupName)throws SQLException{
+    public void insertRegisterRecord(String userName,String passWord)throws SQLException{
         statement = connection.createStatement();
-        String sql = "insert into "+userName+"_sign(userName,groupName) VALUES ('"+userName+"','"+groupName+"')";
+        String sql = "insert into userInfo(userName,passWord,time,is_login) VALUES ('"+userName+"','"+passWord+"','"+df.format(new Date())+"','1')";
         statement.execute(sql);
     }
     public static void main(String args[]){

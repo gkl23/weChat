@@ -7,7 +7,7 @@ import java.util.List;
  * Created by huzhejie on 2016/7/19.
  */
 public class GroupInfo {
-    private Boolean flag = true;
+    private Boolean flag = false;
     private String groupID = "";
     private String groupName="";
     private int memberCount;

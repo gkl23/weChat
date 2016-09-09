@@ -2,9 +2,12 @@ package weChat;
 
 import Models.TipRecord;
 import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
+import org.jb2011.lnf.beautyeye.ch14_combox.BEComboBoxUI;
 import org.jb2011.lnf.beautyeye.ch2_tab.BETabbedPaneUI;
 import org.jb2011.lnf.beautyeye.ch3_button.BEButtonUI;
+import org.jb2011.lnf.beautyeye.ch6_textcoms.BEPasswordFieldUI;
 import org.jb2011.lnf.beautyeye.ch6_textcoms.BETextAreaUI;
+import org.jb2011.lnf.beautyeye.ch6_textcoms.BETextFieldUI;
 
 import javax.swing.*;
 import javax.swing.text.SimpleAttributeSet;
@@ -56,19 +59,28 @@ public class WindowUI {
     private static JPanel userInfoJPanel = new JPanel();
     private static JPanel jPanel = new JPanel();
     private static JPanel chatJPanel = new JPanel();
-    private static JPanel tipPanel = new JPanel();
-    private static JPanel addTipPanel = new JPanel();
+    private static JPanel tipTimePanel = new JPanel();
+    private static JPanel tipPeriodPanel = new JPanel();
+    private static JPanel addTimeTipPanel = new JPanel();
+    private static JPanel addPeriodTipPanel = new JPanel();
+    private static JPanel propertyTimePanel = new JPanel();
+    private static JPanel propertyPeriodPanel = new JPanel();
     private static JPanel wordPanel = new JPanel();
     private static JPanel showGroupPanel = new JPanel();
     private static JPanel invitePanel = new JPanel();
     private static JPanel removePanel = new JPanel();
     private static JPanel loginPanel  = new JPanel();
+    private static JTabbedPane setTipPanel = new JTabbedPane(JTabbedPane.TOP);
+    private static JPanel emptyTipPanel = new JPanel();
+    private static JPanel setTimePanel = new JPanel();//定时发布面板
+    private static JPanel setPeriodPanel = new JPanel();//周期发布面板
     private static JTabbedPane setPanel = new JTabbedPane(JTabbedPane.LEFT);
     private static JPanel emptyPanel = new JPanel();
     private static JPanel setGroupNamePanel = new JPanel();
     private static JPanel setTuLingAPIPanel = new JPanel();
     private static JScrollPane jScrollPane;
-    private static JScrollPane tipJScrollPane;
+    private static JScrollPane tipTimeJScrollPane;
+    private static JScrollPane tipPeriodJScrollPane;
     private static JScrollPane setGroupNameJScrollPane;
     private static JScrollPane inviteScrollPane1;
     private static JScrollPane inviteScrollPane2;
@@ -100,25 +112,33 @@ public class WindowUI {
     private static JList jList3 =null;
     private static JList jList4 = null;
     private static JTextPane jTextPane = new JTextPane();
-    private static JTextArea timeArea = new JTextArea();//定时发送的时间
-    private static JTextArea propertyArea = new JTextArea();//定时发送的内容
+    private static JTextField timeArea = new JTextField(10);//定时发送的时间
+    private static JTextField periodStartTime = new JTextField(10);//间隔发布的开始时间
+    private static JTextField periodTime = new JTextField(5);//间隔发布的间隔时间
+    private static JTextArea propertyTimeArea = new JTextArea();//定时发送的内容
+    private static JTextArea propertyPeriodArea = new JTextArea();//间隔发布的内容
     private static JTextArea tulingKeyArea = new JTextArea();//存放图灵key
-    private static JTextArea userNameArea = new JTextArea();//输入机器人的用户名
-    private static JTextArea userPasswdArea = new JTextArea();//输入机器人的密码
+    private static JTextField userNameArea = new JTextField();//输入机器人的用户名
+    private static JPasswordField userPasswdArea = new JPasswordField();//输入机器人的密码
+    private static JTextArea searchInviteUser = new JTextArea();//搜索用户的搜索输入框
+    private static JTextArea searchInviteGroup = new JTextArea();//搜索群组的搜索输入框
+    private static JTextArea searchRemoveUser = new JTextArea();//搜索用户的搜索输入框
+    private static JTextArea searchRemoveGroup = new JTextArea();//搜索群组的搜索输入框
     private static JComboBox groupNameArea = new JComboBox();//定时发送中选择群名的选择框
-    private static JButton addTipButton = new JButton("添加定时消息发送");
+    private static JComboBox groupNamePeriodArea = new JComboBox();//间隔发布中选择群名
+    private static JButton addTipTimeButton = new JButton("添加");
+    private static JButton addTipPeriodButton = new JButton("添加");
     private static JButton saveRecord = new JButton("保存消息到本地");
     private static JButton seeRecord = new JButton("查看本地消息");
     private static JButton remove = new JButton("踢出该群");
     private static JButton invite = new JButton("邀请进群");
     private static JButton login = new JButton("立即登录");
+    private static JButton synchronization  = new JButton("同步数据");
     private static JButton log = new JButton("登录");
     private static JButton register = new JButton("注册");
     private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
     private static GridBagConstraints gb = new GridBagConstraints();
     private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
-    private static Vector<String> friend = new Vector<>();
-    private static Vector<String> friendID = new Vector<>();
 
     /**
      * 初始化窗口及组件
@@ -162,15 +182,20 @@ public class WindowUI {
             chatIn.setSize(600, 600);
 
 
-            dailyTip.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 500, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 200);
+            dailyTip.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 500, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
             dailyTip.setVisible(false);
             dailyTip.setResizable(false);
             dailyTip.setDefaultCloseOperation(dailyTip.HIDE_ON_CLOSE);
-            dailyTip.setLayout(new GridLayout());
-            dailyTip.setSize(1000, 400);
-            tipJScrollPane = new JScrollPane(tipPanel);
-            tipPanel.setLayout(new BoxLayout(tipPanel, BoxLayout.Y_AXIS));
-            dailyTip.add(tipJScrollPane);
+//            dailyTip.setLayout(new GridBagLayout());
+            dailyTip.setSize(600, 800);
+            emptyTipPanel.setSize(600,800);
+            dailyTip.getContentPane().add(emptyTipPanel);
+            emptyTipPanel.setLayout(new BorderLayout());
+            emptyTipPanel.add(BorderLayout.CENTER,setTipPanel);
+            tipTimeJScrollPane = new JScrollPane(tipTimePanel);
+            tipTimePanel.setLayout(new GridLayout(0,1));
+            tipPeriodJScrollPane = new JScrollPane(tipPeriodPanel);
+            tipPeriodPanel.setLayout(new GridLayout(0,1));
 
             wordModify.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 200, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 100);
             wordModify.setVisible(false);
@@ -221,11 +246,13 @@ public class WindowUI {
             loginFrame.add(loginPanel);
 
             //主界面按钮的UI设置
-            userInfoJPanel.setLayout(new FlowLayout(FlowLayout.LEFT,30,20));
+            userInfoJPanel.setLayout(new FlowLayout(FlowLayout.CENTER,30,20));
             userInfoJPanel.setBackground(Color.lightGray);
             userInfoJPanel.setBorder(BorderFactory.createEmptyBorder(0,20,0,20));
             login.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
             login.setForeground(Color.white);
+            synchronization.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.blue));
+            synchronization.setForeground(Color.white);
             chatJButton.setBorder(null);
             chatJButton.setFocusPainted(false);
             addFriend.setBorder(null);
@@ -358,29 +385,89 @@ public class WindowUI {
             chatIn.add(chatJPanel,gb);
 
             //定时发布的组件设置
-            addTipPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 20));
-            timeArea.setSize(100, 100);
-            timeArea.setLineWrap(true);
-            propertyArea.setSize(200, 100);
-            propertyArea.setLineWrap(true);
-            groupNameArea.setSize(100,100);
-            JLabel time = new JLabel("时间：");
-            JLabel groupName = new JLabel("群名：");
-            JLabel property = new JLabel("内容：");
-            addTipPanel.add(time);
-            addTipPanel.add(timeArea);
-            addTipPanel.add(groupName);
-            addTipPanel.add(groupNameArea);
-            addTipPanel.add(property);
-            addTipPanel.add(propertyArea);
-            addTipPanel.add(addTipButton);
-            tipJScrollPane.setHorizontalScrollBarPolicy(
-                    JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            tipJScrollPane.setVerticalScrollBarPolicy(
+            setTimePanel.setLayout(new GridBagLayout());
+            setPeriodPanel.setLayout(new GridBagLayout());
+            addTimeTipPanel.setLayout(new GridLayout(0,2, 20, 10));
+            addPeriodTipPanel.setLayout(new GridLayout(0,2,20,10));
+            addTimeTipPanel.setBorder(BorderFactory.createEmptyBorder(20,0,20,0));
+            addPeriodTipPanel.setBorder(BorderFactory.createEmptyBorder(20,0,20,0));
+            propertyTimePanel.setLayout(new FlowLayout(FlowLayout.LEFT,40,0));
+            propertyTimePanel.setBorder(BorderFactory.createEmptyBorder(0,0,20,0));
+            propertyPeriodPanel.setLayout(new FlowLayout(FlowLayout.LEFT,40,0));
+            propertyPeriodPanel.setBorder(BorderFactory.createEmptyBorder(0,0,20,0));
+            timeArea.setSize(120, 80);
+            timeArea.setUI(new BETextFieldUI());
+            periodStartTime.setSize(100,80);
+            periodStartTime.setUI(new BETextFieldUI());
+            periodTime.setSize(50,80);
+            periodTime.setUI(new BETextFieldUI());
+            propertyTimeArea.setSize(250, 80);
+            propertyTimeArea.setLineWrap(true);
+            propertyTimeArea.setRows(3);
+            propertyTimeArea.setUI(new BETextAreaUI());
+            propertyPeriodArea.setSize(250,80);
+            propertyPeriodArea.setLineWrap(true);
+            propertyPeriodArea.setRows(3);
+            propertyPeriodArea.setUI(new BETextAreaUI());
+            groupNameArea.setSize(100,80);
+            groupNameArea.setUI(new BEComboBoxUI());
+            groupNamePeriodArea.setSize(100,80);
+            groupNamePeriodArea.setUI(new BEComboBoxUI());
+            JLabel time = new JLabel("指定时间(HH:SS):");
+            JLabel startTime = new JLabel("开始时间(HH:SS):");
+            JLabel period = new JLabel("周期(按小时计):");
+            JLabel groupName_1 = new JLabel("群名:");
+            JLabel groupName_2 = new JLabel("群名:");
+            JLabel property_1 = new JLabel("发布内容(文字):");
+            JLabel property_2 = new JLabel("发布内容(文字):");
+            addTimeTipPanel.add(time);
+            addTimeTipPanel.add(timeArea);
+            addTimeTipPanel.add(groupName_1);
+            addTimeTipPanel.add(groupNameArea);
+            addPeriodTipPanel.add(startTime);
+            addPeriodTipPanel.add(periodStartTime);
+            addPeriodTipPanel.add(period);
+            addPeriodTipPanel.add(periodTime);
+            addPeriodTipPanel.add(groupName_2);
+            addPeriodTipPanel.add(groupNamePeriodArea);
+            propertyTimePanel.add(property_1);
+            propertyTimePanel.add(propertyTimeArea);
+            propertyTimePanel.add(addTipTimeButton);
+            propertyPeriodPanel.add(property_2);
+            propertyPeriodPanel.add(propertyPeriodArea);
+            propertyPeriodPanel.add(addTipPeriodButton);
+            tipTimeJScrollPane.setHorizontalScrollBarPolicy(
+                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            tipTimeJScrollPane.setVerticalScrollBarPolicy(
                     JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-            addTipButton.setSize(0, 100);
-            addTipButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
-            tipPanel.add(addTipPanel);
+            tipPeriodJScrollPane.setHorizontalScrollBarPolicy(
+                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            tipPeriodJScrollPane.setVerticalScrollBarPolicy(
+                    JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+            addTipTimeButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
+            addTipPeriodButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.ipady = 40;
+            gbc.ipadx = 250;
+            setTimePanel.add(addTimeTipPanel,gbc);
+            gbc.ipady = 60;
+            setPeriodPanel.add(addPeriodTipPanel,gbc);
+            gbc.gridy = 1;
+            gbc.ipady = 20;
+            gbc.ipadx = 330;
+            setTimePanel.add(propertyTimePanel,gbc);
+            setPeriodPanel.add(propertyPeriodPanel,gbc);
+            gbc.gridy = 2;
+            gbc.ipady = 430;
+            gbc.ipadx= 510;
+            setTimePanel.add(tipTimeJScrollPane,gbc);
+            gbc.ipady = 375;
+            setPeriodPanel.add(tipPeriodJScrollPane,gbc);
+            setTipPanel.add("定时发布",setTimePanel);
+            setTipPanel.add("间隔发布",setPeriodPanel);
+
 
 
             wordPanel.setLayout(new FlowLayout(FlowLayout.CENTER,10,30));
@@ -407,16 +494,28 @@ public class WindowUI {
             showGroupPanel.setLayout(new GridLayout(0,1,20,20));
             showGroupPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
 
-            invitePanel.setLayout(new GridLayout(0,2,20,20));
-            invitePanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+            invitePanel.setLayout(new GridBagLayout());
             invite.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
             invite.setForeground(Color.white);
+            searchInviteUser.setBorder(BorderFactory.createTitledBorder("搜索用户名"));
+            searchInviteUser.setLineWrap(true);
+            searchInviteGroup.setBorder(BorderFactory.createTitledBorder("搜索群名"));
+            searchInviteGroup.setLineWrap(true);
+            searchInviteUser.setSize(365,100);
+            searchInviteGroup.setSize(365,100);
+            jList1 = new JList();
 
 
-            removePanel.setLayout(new GridLayout(0,2,20,20));
-            removePanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+
+            removePanel.setLayout(new GridBagLayout());
             remove.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
             remove.setForeground(Color.white);
+            searchRemoveUser.setBorder(BorderFactory.createTitledBorder("搜索用户名"));
+            searchRemoveUser.setLineWrap(true);
+            searchRemoveGroup.setBorder(BorderFactory.createTitledBorder("搜索群名"));
+            searchRemoveGroup.setLineWrap(true);
+            searchRemoveUser.setSize(365,100);
+            searchRemoveGroup.setSize(365,100);
             jList4 = new JList();
 
             setGroupNamePanel.setLayout(new GridLayout(0,3,20,20));
@@ -440,32 +539,22 @@ public class WindowUI {
             register.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
             register.setForeground(Color.white);
             loginPanel.setLayout(new FlowLayout(FlowLayout.CENTER,50,30));
-            userNameArea.setUI(new BETextAreaUI());
-            userNameArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0,0,0,0),"用户名:"));
-            loginPanel.add(userNameArea);
-            userNameArea.setLineWrap(true);
+            userNameArea.setUI(new BETextFieldUI());
             userNameArea.setSize(300,150);
-            userPasswdArea.setUI(new BETextAreaUI());
-            userPasswdArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0,0,0,0),"密码:"));
-            loginPanel.add(userPasswdArea);
-            userPasswdArea.setLineWrap(true);
+            userNameArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0,0,0,0),"用户名:"));
+            userNameArea.setColumns(40);
+            loginPanel.add(userNameArea);
+            userPasswdArea.setUI(new BEPasswordFieldUI());
             userPasswdArea.setSize(300,150);
+            userPasswdArea.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0,0,0,0),"密码:"));
+            userPasswdArea.setColumns(40);
+            loginPanel.add(userPasswdArea);
             loginPanel.add(log);
             loginPanel.add(register);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-    /**
-     * 添加群名修改的组件
-     *
-     * @param oldName
-     *
-     * @param newName
-     **/
-    public static void addGroupNameModify(String oldName,String newName){
-
     }
     /**
      * 添加定时记录的组件
@@ -478,9 +567,10 @@ public class WindowUI {
         deleteButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
         JLabel record = new JLabel();
         final JPanel totalRecord = new JPanel();
-        totalRecord.setLayout(new FlowLayout(FlowLayout.CENTER, 50, 20));
+        totalRecord.setSize(400,100);
+        totalRecord.setLayout(new FlowLayout(FlowLayout.CENTER, 30, 20));
         try{
-            record.setText("时间：" + df.format(df.parse(timeArea.getText())) + "   群："+groupNameArea.getSelectedItem().toString()+"   内容: " + propertyArea.getText());
+            record.setText("时间：" + df.format(df.parse(timeArea.getText())) + "   群："+groupNameArea.getSelectedItem().toString()+"   内容: " + propertyTimeArea.getText());
             totalRecord.add(record);
             totalRecord.add(deleteButton);
             deleteButton.addActionListener(new ActionListener() {
@@ -493,12 +583,12 @@ public class WindowUI {
                             iterator.remove();
                         }
                     }
-                    tipPanel.remove(totalRecord);
+                    tipTimePanel.remove(totalRecord);
                     dailyTip.validate();
                     dailyTip.repaint();
                 }
             });
-            tipPanel.add(totalRecord);
+            tipTimePanel.add(totalRecord);
             dailyTip.validate();
             dailyTip.repaint();
         }catch (Exception e){
@@ -622,52 +712,36 @@ public class WindowUI {
         WindowUI.dailyTip = dailyTip;
     }
 
-    public static JPanel getTipPanel() {
-        return tipPanel;
+    public static JPanel getTipTimePanel() {
+        return tipTimePanel;
     }
 
-    public static void setTipPanel(JPanel tipPanel) {
-        WindowUI.tipPanel = tipPanel;
+    public static void setTipTimePanel(JPanel tipTimePanel) {
+        WindowUI.tipTimePanel = tipTimePanel;
     }
 
-    public static JScrollPane getTipJScrollPane() {
-        return tipJScrollPane;
+    public static JScrollPane getTipTimeJScrollPane() {
+        return tipTimeJScrollPane;
     }
 
-    public static void setTipJScrollPane(JScrollPane tipJScrollPane) {
-        WindowUI.tipJScrollPane = tipJScrollPane;
+    public static void setTipTimeJScrollPane(JScrollPane tipTimeJScrollPane) {
+        WindowUI.tipTimeJScrollPane = tipTimeJScrollPane;
     }
 
-    public static JTextArea getTimeArea() {
-        return timeArea;
+    public static JButton getAddTipTimeButton() {
+        return addTipTimeButton;
     }
 
-    public static void setTimeArea(JTextArea timeArea) {
-        WindowUI.timeArea = timeArea;
+    public static void setAddTipTimeButton(JButton addTipTimeButton) {
+        WindowUI.addTipTimeButton = addTipTimeButton;
     }
 
-    public static JTextArea getPropertyArea() {
-        return propertyArea;
+    public static JPanel getAddTimeTipPanel() {
+        return addTimeTipPanel;
     }
 
-    public static void setPropertyArea(JTextArea propertyArea) {
-        WindowUI.propertyArea = propertyArea;
-    }
-
-    public static JButton getAddTipButton() {
-        return addTipButton;
-    }
-
-    public static void setAddTipButton(JButton addTipButton) {
-        WindowUI.addTipButton = addTipButton;
-    }
-
-    public static JPanel getAddTipPanel() {
-        return addTipPanel;
-    }
-
-    public static void setAddTipPanel(JPanel addTipPanel) {
-        WindowUI.addTipPanel = addTipPanel;
+    public static void setAddTimeTipPanel(JPanel addTimeTipPanel) {
+        WindowUI.addTimeTipPanel = addTimeTipPanel;
     }
 
     public static SimpleDateFormat getDf() {
@@ -1094,22 +1168,6 @@ public class WindowUI {
         WindowUI.jList4 = jList4;
     }
 
-    public static Vector<String> getFriend() {
-        return friend;
-    }
-
-    public static void setFriend(Vector<String> friend) {
-        WindowUI.friend = friend;
-    }
-
-    public static Vector<String> getFriendID() {
-        return friendID;
-    }
-
-    public static void setFriendID(Vector<String> friendID) {
-        WindowUI.friendID = friendID;
-    }
-
     public static JFrame getSetFrame() {
         return setFrame;
     }
@@ -1206,19 +1264,19 @@ public class WindowUI {
         WindowUI.tulingKeyArea = tulingKeyArea;
     }
 
-    public static JTextArea getUserNameArea() {
+    public static JTextField getUserNameArea() {
         return userNameArea;
     }
 
-    public static void setUserNameArea(JTextArea userNameArea) {
+    public static void setUserNameArea(JTextField userNameArea) {
         WindowUI.userNameArea = userNameArea;
     }
 
-    public static JTextArea getUserPasswdArea() {
+    public static JPasswordField getUserPasswdArea() {
         return userPasswdArea;
     }
 
-    public static void setUserPasswdArea(JTextArea userPasswdArea) {
+    public static void setUserPasswdArea(JPasswordField userPasswdArea) {
         WindowUI.userPasswdArea = userPasswdArea;
     }
 
@@ -1228,5 +1286,77 @@ public class WindowUI {
 
     public static void setLogin(JButton login) {
         WindowUI.login = login;
+    }
+
+    public static JTextArea getSearchInviteUser() {
+        return searchInviteUser;
+    }
+
+    public static void setSearchInviteUser(JTextArea searchInviteUser) {
+        WindowUI.searchInviteUser = searchInviteUser;
+    }
+
+    public static JTextArea getSearchInviteGroup() {
+        return searchInviteGroup;
+    }
+
+    public static void setSearchInviteGroup(JTextArea searchInviteGroup) {
+        WindowUI.searchInviteGroup = searchInviteGroup;
+    }
+
+    public static JButton getLog() {
+        return log;
+    }
+
+    public static void setLog(JButton log) {
+        WindowUI.log = log;
+    }
+
+    public static JButton getRegister() {
+        return register;
+    }
+
+    public static void setRegister(JButton register) {
+        WindowUI.register = register;
+    }
+
+    public static JTextField getTimeArea() {
+        return timeArea;
+    }
+
+    public static void setTimeArea(JTextField timeArea) {
+        WindowUI.timeArea = timeArea;
+    }
+
+    public static JTextArea getPropertyTimeArea() {
+        return propertyTimeArea;
+    }
+
+    public static void setPropertyTimeArea(JTextArea propertyTimeArea) {
+        WindowUI.propertyTimeArea = propertyTimeArea;
+    }
+
+    public static JButton getSynchronization() {
+        return synchronization;
+    }
+
+    public static void setSynchronization(JButton synchronization) {
+        WindowUI.synchronization = synchronization;
+    }
+
+    public static JTextArea getSearchRemoveUser() {
+        return searchRemoveUser;
+    }
+
+    public static void setSearchRemoveUser(JTextArea searchRemoveUser) {
+        WindowUI.searchRemoveUser = searchRemoveUser;
+    }
+
+    public static JTextArea getSearchRemoveGroup() {
+        return searchRemoveGroup;
+    }
+
+    public static void setSearchRemoveGroup(JTextArea searchRemoveGroup) {
+        WindowUI.searchRemoveGroup = searchRemoveGroup;
     }
 }
