@@ -5,7 +5,8 @@ package Models;
  */
 public class TipRecord {
 	private Boolean flag;
-	private String time;
+	private String time;//可以做指定时间，也可以做间隔发布的起始时间
+	private String period;//间隔时间
 	private String groupName;
 	private String property;
 
@@ -14,6 +15,15 @@ public class TipRecord {
 		time = "";
 		groupName = "";
 		property = "";
+		period = "";
+	}
+
+	public String getPeriod() {
+		return period;
+	}
+
+	public void setPeriod(String period) {
+		this.period = period;
 	}
 
 	public Boolean getFlag() {

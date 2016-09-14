@@ -15,6 +15,8 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import Models.GroupInfo;
 import Models.TipRecord;
@@ -42,6 +44,7 @@ public class Main {
 	private static Boolean sensitiveFlag = true; // 敏感词警告
 	private static Boolean intelligentReply = true;//智能回复
 	// private static Boolean timerSendMsgFlag = true;// 控制定时发布
+	private static String apiKey="49d5dd04005a4d82b7d5bc30dae96821";
 	private static String url;
 	private static String timeStamp;
 	private static String uuid;
@@ -85,6 +88,8 @@ public class Main {
 	// private static String userAvatar;
 
 	private static WindowUI windowUI;
+	private static Pattern tulingKey = Pattern.compile("[0-9|a-z]");//图灵key是否满足条件
+	private static Matcher matcher;
 
 	private static DBConnect dbConnect;
 
@@ -151,7 +156,6 @@ public class Main {
 	 */
 	private String aiChat(String content, String userId) {
 		final String apiUrl = "http://www.tuling123.com/openapi/api";
-		final String apiKey = "49d5dd04005a4d82b7d5bc30dae96821"; //apikey
 		final String secretKey = "02a06d8364d4ef9a"; //key
 		final String timeStamp = System.currentTimeMillis() + "";
 
@@ -250,22 +254,27 @@ public class Main {
 		if (!sense_file.exists()) {
 			sense_file.createNewFile();
 		}
-		Scanner sc = new Scanner(public_file);
+		Scanner sc= null;
+		sc = new Scanner(public_file);
 		while (sc.hasNextLine()) {
 			s = sc.nextLine().split("--");
 			if (s.length == 2)
 				publicReply.put(s[0], s[1]);
 		}
+		sc.close();
 		sc = new Scanner(private_file);
 		while (sc.hasNextLine()) {
 			s = sc.nextLine().split("--");
 			if (s.length == 2)
 				privateReply.put(s[0], s[1]);
 		}
+		sc.close();
 		sc = new Scanner(sense_file);
 		while (sc.hasNextLine()) {
 			senseReply.add(sc.nextLine());
 		}
+		sc.close();
+		System.out.println(publicReply+","+privateReply+","+senseReply);
 	}
 
 	/**
@@ -452,9 +461,11 @@ public class Main {
 								}
 
 								// 如果开启了敏感词警告
+								System.out.println(senseReply);
 								if (sensitiveFlag)
 									for (String senseWord : senseReply) {
-										if (content.equals(senseWord)) {
+										if (content.equals(senseWord.trim())) {
+											System.out.print("lalal");
 											replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
 											replyMsg(replyInGroupContent, groupID);
 											matchKeyword = true;
@@ -471,7 +482,7 @@ public class Main {
 						case 3: // 图片消息
 							url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID=" + msgID + "&skey="
 									+ skey + "&type=slave";
-							ImageIcon image = new ImageIcon(HttpRequest.get(url).bytes());
+							ImageIcon image = new ImageIcon(HttpRequest.get(url).header("Cookie",header).bytes());
 							windowUI.getjTextPane().setCaretPosition(0);
 							windowUI.getjTextPane().insertIcon(image);
 							content = "\n";
@@ -585,7 +596,7 @@ public class Main {
 	}
 
 	/**
-	 * 回复消息
+	 * 回复及发送消息
 	 * @param s   回复的内容
 	 * @param id  回复对象的ID
 	 */
@@ -790,6 +801,8 @@ public class Main {
 		}
 		js.put("List", groupJs);
 		String s = this.sendPostRequest(url, js);
+		System.out.println(s);
+		System.out.println(pass_ticket+","+wxsid+","+skey+","+wxuin);
 		JSONObject jsonObject = JSONObject.fromObject(s);
 		JSONArray contactList = jsonObject.getJSONArray("ContactList");
 		String groupName;
@@ -910,16 +923,33 @@ public class Main {
 				while (true) {
 					checkMsg();
 					for (int i = 0; i < tipRecordList.size(); i++) {
+						//指定时间发布
 						if (!tipRecordList.get(i).getFlag() && windowUI.getDf().format(new Date()).toString()
-								.equals(tipRecordList.get(i).getTime())) {
+								.equals(tipRecordList.get(i).getTime())&&tipRecordList.get(i).getPeriod().equals("")) {
+								for (int j = 0; j < groupInfoList.size(); j++) {
+									if (groupInfoList.get(j).getGroupName().equals(tipRecordList.get(i).getGroupName())) {
+										tipGroupID = groupInfoList.get(j).getGroupID();
+										break;
+									}
+								}
+								replyMsg(tipRecordList.get(i).getProperty(), tipGroupID);
+								tipRecordList.get(i).setFlag(true);
+						}
+						//间隔时间发布
+						else if(windowUI.getDf().format(new Date()).toString()
+								.equals(tipRecordList.get(i).getTime())&&!tipRecordList.get(i).getPeriod().equals("")){
 							for (int j = 0; j < groupInfoList.size(); j++) {
 								if (groupInfoList.get(j).getGroupName().equals(tipRecordList.get(i).getGroupName())) {
 									tipGroupID = groupInfoList.get(j).getGroupID();
 									break;
 								}
 							}
-							replyMsg(tipRecordList.get(i).getProperty(), tipGroupID);
-							tipRecordList.get(i).setFlag(true);
+							int period = Integer.parseInt(tipRecordList.get(i).getPeriod());
+							replyMsg(tipRecordList.get(i).getProperty(),tipGroupID);
+							int startHour = Integer.parseInt(tipRecordList.get(i).getTime().split(":")[0]);
+							String minute = tipRecordList.get(i).getTime().split(":")[1];
+							String nextHour = String.valueOf(startHour + period);
+							tipRecordList.get(i).setTime(nextHour+":"+minute);
 						}
 					}
 				}
@@ -1081,6 +1111,7 @@ public class Main {
 					senseReply.clear();
 					try{
 						htmlUnit.readFiles();
+						JOptionPane.showMessageDialog(null,"提示:数据同步成功！","信息提示",JOptionPane.INFORMATION_MESSAGE);
 					}catch (Exception e1){
 						e1.printStackTrace();
 					}
@@ -1573,7 +1604,7 @@ public class Main {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					TipRecord tipRecord = new TipRecord();
-					windowUI.addTip(tipRecord);
+					windowUI.addTimeTip(tipRecord);
 					try {
 						tipRecord.setTime(windowUI.getDf()
 								.format(windowUI.getDf().parse(windowUI.getTimeArea().getText())).toString());
@@ -1581,6 +1612,22 @@ public class Main {
 						tipRecord.setGroupName(windowUI.getGroupNameArea().getSelectedItem().toString());
 						tipRecordList.add(tipRecord);
 					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+				}
+			});
+			windowUI.getAddTipPeriodButton().addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					TipRecord tipRecord = new TipRecord();
+					windowUI.addPeriodTip(tipRecord);
+					try{
+						tipRecord.setTime(windowUI.getDf().format(windowUI.getDf().parse(windowUI.getPeriodStartTime().getText())).toString());
+						tipRecord.setPeriod(windowUI.getPeriodTime().getText());
+						tipRecord.setGroupName(windowUI.getGroupNamePeriodArea().getSelectedItem().toString());
+						tipRecord.setProperty(windowUI.getPropertyPeriodArea().getText());
+						tipRecordList.add(tipRecord);
+					}catch(Exception e1){
 						e1.printStackTrace();
 					}
 				}
@@ -1620,6 +1667,25 @@ public class Main {
 						e1.printStackTrace();
 					}
 
+				}
+			});
+			windowUI.getModifyTulingKey().addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					matcher=tulingKey.matcher(windowUI.getTulingKeyArea().getText());
+					if(!windowUI.getTulingKeyArea().getText().equals("")) {
+						if(windowUI.getTulingKeyArea().getText().length()!=32){
+							JOptionPane.showMessageDialog(null,"错误：图灵机器人API密钥应该由32位小写字母及0到9数字组成");
+							windowUI.getTulingKeyArea().setText("");
+						}
+						else if(!matcher.matches()){
+							JOptionPane.showMessageDialog(null,"错误：图灵机器人API密钥应该由小写字母及0到9数字组成");
+							windowUI.getTulingKeyArea().setText("");
+						}
+						apiKey = windowUI.getTulingKeyArea().getText();
+					}
+					else
+						apiKey = "49d5dd04005a4d82b7d5bc30dae96821";
 				}
 			});
 
@@ -1952,14 +2018,6 @@ public class Main {
 
 				@Override
 				public void windowClosing(WindowEvent e) {
-					publicReply.clear();
-					privateReply.clear();
-					senseReply.clear();
-					try{
-						htmlUnit.readFiles();
-					}catch(Exception e1){
-						e1.printStackTrace();
-					}
 					windowUI.getLocalWord().setEnabled(true);
 				}
 

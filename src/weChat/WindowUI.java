@@ -136,6 +136,7 @@ public class WindowUI {
     private static JButton synchronization  = new JButton("同步数据");
     private static JButton log = new JButton("登录");
     private static JButton register = new JButton("注册");
+    private static JButton modifyTulingKey = new JButton("修改");
     private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
     private static GridBagConstraints gb = new GridBagConstraints();
     private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
@@ -465,6 +466,7 @@ public class WindowUI {
             setTimePanel.add(tipTimeJScrollPane,gbc);
             gbc.ipady = 375;
             setPeriodPanel.add(tipPeriodJScrollPane,gbc);
+            setTipPanel.setUI(new BETabbedPaneUI());
             setTipPanel.add("定时发布",setTimePanel);
             setTipPanel.add("间隔发布",setPeriodPanel);
 
@@ -520,6 +522,8 @@ public class WindowUI {
 
             setGroupNamePanel.setLayout(new GridLayout(0,3,20,20));
             setTuLingAPIPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,50));
+            modifyTulingKey.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
+            modifyTulingKey.setForeground(Color.white);
 //            setGroupNamePanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
             setGroupNameJScrollPane = new JScrollPane(setGroupNamePanel);
             tuLing.setFont(new Font("黑体",1,16));
@@ -528,6 +532,7 @@ public class WindowUI {
             tulingKeyArea.setSize(350,100);
             setTuLingAPIPanel.add(tuLing);
             setTuLingAPIPanel.add(tulingKeyArea);
+            setTuLingAPIPanel.add(modifyTulingKey);
             setPanel.setUI(new BETabbedPaneUI());
             setPanel.add("修改群名",setGroupNameJScrollPane);
             setPanel.add("修改图灵key",setTuLingAPIPanel);
@@ -557,12 +562,12 @@ public class WindowUI {
         }
     }
     /**
-     * 添加定时记录的组件
+     * 添加定时指定发布消息记录的组件
      *
      * @param tipRecord
      *
      **/
-    public static void addTip(final TipRecord tipRecord) {
+    public static void addTimeTip(final TipRecord tipRecord) {
         JButton deleteButton = new JButton("删除");
         deleteButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
         JLabel record = new JLabel();
@@ -584,19 +589,57 @@ public class WindowUI {
                         }
                     }
                     tipTimePanel.remove(totalRecord);
-                    dailyTip.validate();
-                    dailyTip.repaint();
+                    tipTimePanel.validate();
+                    tipTimePanel.repaint();
                 }
             });
             tipTimePanel.add(totalRecord);
-            dailyTip.validate();
-            dailyTip.repaint();
+            tipTimePanel.validate();
+            tipTimePanel.repaint();
         }catch (Exception e){
             JOptionPane.showMessageDialog(null, "错误：输入时间格式不正确", "错误", JOptionPane.ERROR_MESSAGE);
         }
 
     }
 
+    /**
+     *添加间隔时间指定发布消息记录的组件
+     * @return
+     */
+   public static void addPeriodTip(final TipRecord tipRecord){
+       JButton deleteButton = new JButton("删除");
+       deleteButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+       JLabel record = new JLabel();
+       final JPanel totalRecord = new JPanel();
+       totalRecord.setSize(400,100);
+       totalRecord.setLayout(new FlowLayout(FlowLayout.CENTER, 30, 20));
+       try{
+           record.setText("时间：" + df.format(df.parse(periodStartTime.getText())) + "   每间隔"+periodTime.getText()+"小时"+"   群："+groupNameArea.getSelectedItem().toString()+"   内容: " + propertyTimeArea.getText());
+           totalRecord.add(record);
+           totalRecord.add(deleteButton);
+           deleteButton.addActionListener(new ActionListener() {
+               @Override
+               public void actionPerformed(ActionEvent e) {
+                   Iterator iterator = Main.getTipRecordList().iterator();
+                   while(iterator.hasNext()){
+                       TipRecord tipRecord1 = (TipRecord)iterator.next();
+                       if(tipRecord.equals(tipRecord1)){
+                           iterator.remove();
+                       }
+                   }
+                   tipPeriodPanel.remove(totalRecord);
+                   tipPeriodPanel.validate();
+                   tipPeriodPanel.repaint();
+               }
+           });
+           tipPeriodPanel.add(totalRecord);
+           tipTimePanel.validate();
+           tipTimePanel.repaint();
+       }catch (Exception e){
+           JOptionPane.showMessageDialog(null, "错误：输入时间格式不正确", "错误", JOptionPane.ERROR_MESSAGE);
+       }
+
+   }
 
 
     public static SimpleAttributeSet getAttributeSet() {
@@ -1358,5 +1401,125 @@ public class WindowUI {
 
     public static void setSearchRemoveGroup(JTextArea searchRemoveGroup) {
         WindowUI.searchRemoveGroup = searchRemoveGroup;
+    }
+
+    public static JPanel getTipPeriodPanel() {
+        return tipPeriodPanel;
+    }
+
+    public static void setTipPeriodPanel(JPanel tipPeriodPanel) {
+        WindowUI.tipPeriodPanel = tipPeriodPanel;
+    }
+
+    public static JPanel getAddPeriodTipPanel() {
+        return addPeriodTipPanel;
+    }
+
+    public static void setAddPeriodTipPanel(JPanel addPeriodTipPanel) {
+        WindowUI.addPeriodTipPanel = addPeriodTipPanel;
+    }
+
+    public static JPanel getPropertyTimePanel() {
+        return propertyTimePanel;
+    }
+
+    public static void setPropertyTimePanel(JPanel propertyTimePanel) {
+        WindowUI.propertyTimePanel = propertyTimePanel;
+    }
+
+    public static JPanel getPropertyPeriodPanel() {
+        return propertyPeriodPanel;
+    }
+
+    public static void setPropertyPeriodPanel(JPanel propertyPeriodPanel) {
+        WindowUI.propertyPeriodPanel = propertyPeriodPanel;
+    }
+
+    public static JTabbedPane getSetTipPanel() {
+        return setTipPanel;
+    }
+
+    public static void setSetTipPanel(JTabbedPane setTipPanel) {
+        WindowUI.setTipPanel = setTipPanel;
+    }
+
+    public static JPanel getEmptyTipPanel() {
+        return emptyTipPanel;
+    }
+
+    public static void setEmptyTipPanel(JPanel emptyTipPanel) {
+        WindowUI.emptyTipPanel = emptyTipPanel;
+    }
+
+    public static JPanel getSetTimePanel() {
+        return setTimePanel;
+    }
+
+    public static void setSetTimePanel(JPanel setTimePanel) {
+        WindowUI.setTimePanel = setTimePanel;
+    }
+
+    public static JPanel getSetPeriodPanel() {
+        return setPeriodPanel;
+    }
+
+    public static void setSetPeriodPanel(JPanel setPeriodPanel) {
+        WindowUI.setPeriodPanel = setPeriodPanel;
+    }
+
+    public static JScrollPane getTipPeriodJScrollPane() {
+        return tipPeriodJScrollPane;
+    }
+
+    public static void setTipPeriodJScrollPane(JScrollPane tipPeriodJScrollPane) {
+        WindowUI.tipPeriodJScrollPane = tipPeriodJScrollPane;
+    }
+
+    public static JTextField getPeriodStartTime() {
+        return periodStartTime;
+    }
+
+    public static void setPeriodStartTime(JTextField periodStartTime) {
+        WindowUI.periodStartTime = periodStartTime;
+    }
+
+    public static JTextField getPeriodTime() {
+        return periodTime;
+    }
+
+    public static void setPeriodTime(JTextField periodTime) {
+        WindowUI.periodTime = periodTime;
+    }
+
+    public static JTextArea getPropertyPeriodArea() {
+        return propertyPeriodArea;
+    }
+
+    public static void setPropertyPeriodArea(JTextArea propertyPeriodArea) {
+        WindowUI.propertyPeriodArea = propertyPeriodArea;
+    }
+
+    public static JComboBox getGroupNamePeriodArea() {
+        return groupNamePeriodArea;
+    }
+
+    public static void setGroupNamePeriodArea(JComboBox groupNamePeriodArea) {
+        WindowUI.groupNamePeriodArea = groupNamePeriodArea;
+    }
+
+    public static JButton getAddTipPeriodButton() {
+        return addTipPeriodButton;
+    }
+
+    public static void setAddTipPeriodButton(JButton addTipPeriodButton) {
+        WindowUI.addTipPeriodButton = addTipPeriodButton;
+    }
+
+    public static JButton getModifyTulingKey() {
+        return modifyTulingKey;
+    }
+
+    public static void setModifyTulingKey(JButton modifyTulingKey) {
+        WindowUI.modifyTulingKey = modifyTulingKey;
     }
 }
