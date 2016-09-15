@@ -55,7 +55,7 @@ public class DBConnect {
     }
     public Boolean checkLogin(String userName,String passWord)throws SQLException{
         statement = connection.createStatement();
-        String sql = "SELECT * FROM userInfo WHERE userName = userName AND passWord = passWord";
+        String sql = "SELECT * FROM userInfo WHERE userName = '"+userName +"' AND passWord = '"+passWord+"'";
         return statement.execute(sql);
     }
     public void insertRegisterRecord(String userName,String passWord)throws SQLException{
@@ -63,15 +63,26 @@ public class DBConnect {
         String sql = "insert into userInfo(userName,passWord,time,is_login) VALUES ('"+userName+"','"+passWord+"','"+df.format(new Date())+"','1')";
         statement.execute(sql);
     }
-    public static void main(String args[]){
-        DBConnect dbConnect = new DBConnect();
-        dbConnect.connectDB();
-        try {
-//            dbConnect.addTable("lala");
-            dbConnect.insertRegisterRecord("lala","lalala");
-            connection.close();
-        }catch(SQLException e){
-            e.printStackTrace();
+    public Boolean checkProgram(String info)throws SQLException {
+        String sql = "SELECT p.login_date FROM pcInfo p WHERE p.info = '" + info+"'";
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+        ResultSet rs = preparedStatement.executeQuery(sql);
+        if (!rs.next()) {
+            sql = "INSERT INTO pcInfo(info,login_date) VALUES ('" + info + "','" + df.format(new Date()) + "')";
+            statement = connection.createStatement();
+            return !statement.execute(sql);
+        }
+        else {
+            long d = 0l;
+            try {
+                d = (df.parse(rs.getObject(1).toString()).getTime() - df.parse(df.format(new Date())).getTime()) / (1000 * 60 * 60 * 24);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (d > 29) {
+                return false;
+            } else
+                return true;
         }
     }
 }

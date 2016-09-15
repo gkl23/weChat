@@ -118,8 +118,6 @@ public class Main {
 	 */
 	public Main() {
 		windowUI = new WindowUI();
-		dbConnect = new DBConnect();
-		dbConnect.connectDB();
 		doc = windowUI.getjTextPane().getDocument();
 		hasNotified = false;
 		try {
@@ -454,7 +452,7 @@ public class Main {
 												break;
 											}
 
-									if (!matchKeyword&&intelligentReply) { // 关键词匹配失败，智能回复
+									if (!matchKeyword) { // 关键词匹配失败，智能回复
 										replyInGroupContent = to + " 您好，" + aiChat(content, memberID);
 										replyMsg(replyInGroupContent, groupID);
 									}
@@ -959,6 +957,18 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
+		dbConnect = new DBConnect();
+		dbConnect.connectDB();
+		Properties properties = System.getProperties();
+		String info = properties.getProperty("user.name")+properties.getProperty("os.version");
+		try {
+			if (!dbConnect.checkProgram(info)) {
+				JOptionPane.showMessageDialog(null,"提示：软件试用期已到","信息提示",JOptionPane.INFORMATION_MESSAGE);
+				System.exit(0);
+			}
+		}catch (Exception et){
+			et.printStackTrace();
+		}
 		loadingDialogJFrame = new LoadingDialogJFrame("载入二维码...");
 		System.setProperty("jsse.enableSNIExtension", "false"); // 设置该属性，避免出现unrecognized_name异常
 		System.setProperty("https.protocols", "TLSv1"); // 设置协议为TLSv1，与服务器对应，避免出现与服务器断连的异常
