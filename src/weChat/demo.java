@@ -14,6 +14,9 @@ import java.util.Properties;
  */
 public class demo {
     public static void main(String args[])throws Exception{
-
+        WindowUI windowUI = new WindowUI();
+        windowUI.getDailyTip().setVisible(true);
+        windowUI.getGroupNameArea().addItem("留日申请（大学院）起航群      ");
+        windowUI.getGroupNamePeriodArea().addItem("留日申请（大学院）起航群       ");
     }
 }

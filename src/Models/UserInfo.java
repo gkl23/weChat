@@ -4,9 +4,18 @@ package Models;
  * Created by huzhejie on 2016/7/19.
  */
 public class UserInfo {
+    private String remarkName = "";
     private String userId="";
     private String nickName="";
     private String signature="";
+
+    public String getRemarkName() {
+        return remarkName;
+    }
+
+    public void setRemarkName(String remarkName) {
+        this.remarkName = remarkName;
+    }
 
     public String getUserId() {
         return userId;

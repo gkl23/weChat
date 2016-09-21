@@ -7,11 +7,21 @@ import java.util.List;
  * Created by huzhejie on 2016/7/19.
  */
 public class GroupInfo {
+    private Boolean acrossGroupFlag;//开启跨群功能
     private Boolean flag = false;
     private String groupID = "";
     private String groupName="";
     private int memberCount;
     private List<UserInfo> group = new ArrayList<>();
+
+    public Boolean getAcrossGroupFlag() {
+        return acrossGroupFlag;
+    }
+
+    public void setAcrossGroupFlag(Boolean acrossGroupFlag) {
+        this.acrossGroupFlag = acrossGroupFlag;
+    }
+
     public Boolean getFlag() {
         return flag;
     }

@@ -35,15 +35,15 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.Position;
 
 public class Main {
 	private static HttpRequest httpRequest;
 	private static Boolean updatePic = false;
 	private static Boolean autoAddFriendFlag = true; // 控制自动添加好友
-	private static Boolean autoReplyFlag = true; // 自动回复
+	private static Boolean autoReplyFlag = true; // 自动回复加智能聊天
 	private static Boolean sensitiveFlag = true; // 敏感词警告
-	private static Boolean intelligentReply = true;//智能回复
-	// private static Boolean timerSendMsgFlag = true;// 控制定时发布
+	private static Boolean atModeFlag = true;// 控制@模式
 	private static String apiKey="49d5dd04005a4d82b7d5bc30dae96821";
 	private static String url;
 	private static String timeStamp;
@@ -60,6 +60,8 @@ public class Main {
 	private static String groupID="";
 	private static String tipGroupID = "";
 	private static String msgID = "";
+	private static final String ATDELIM = " "; // ！！注意，@消息的分隔符并不是空格，所以设为常量
+	private static final int maxSize = 5;
 	private static List<String> activeGroupId = new ArrayList<>();
 	private static List<String> unactiveGroupId = new ArrayList<>();
 	private static List<String> recordList = new ArrayList<>();
@@ -85,7 +87,6 @@ public class Main {
 	private static List<TipRecord> tipRecordList = new ArrayList<>();
 	private static Document doc;
 	private static MMAnalyzer analyzer = new MMAnalyzer(1);
-	// private static String userAvatar;
 
 	private static WindowUI windowUI;
 	private static Pattern tulingKey = Pattern.compile("[0-9|a-z]");//图灵key是否满足条件
@@ -121,7 +122,7 @@ public class Main {
 		doc = windowUI.getjTextPane().getDocument();
 		hasNotified = false;
 		try {
-			doc.insertString(0, "您已登陆成功，开始记录消息!\n", windowUI.getAttributeSet());
+			doc.insertString(doc.getLength(), "您已登陆成功，开始记录消息!\n", windowUI.getAttributeSet());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -238,41 +239,76 @@ public class Main {
 	 * 读取词库文件
 	 * @throws Exception
 	 */
-	private void readFiles() throws Exception {
+	public void readFiles() throws Exception {
 		String s[] = null;
 		File public_file = new File("公开.txt");
 		File private_file = new File("私密.txt");
 		File sense_file = new File("敏感词.txt");
+		BufferedWriter bw = null;
+		Boolean flag1=false,flag2=false,flag3=false;
 		if (!public_file.exists()) {
 			public_file.createNewFile();
+			bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(public_file), "UTF-8"));
+			bw.write("请按照格式：  关键词--回复内容   来编写~");
+			bw.flush();
+			bw.close();
 		}
 		if (!private_file.exists()) {
 			private_file.createNewFile();
+			bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (private_file), "UTF-8"));
+			bw.write("请按照格式：  关键词--回复内容   来编写~");
+			bw.flush();
+			bw.close();
 		}
 		if (!sense_file.exists()) {
 			sense_file.createNewFile();
+			bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (sense_file), "UTF-8"));
+			bw.write("请按照格式：  敏感词   来编写~");
+			bw.flush();
+			bw.close();
 		}
-		Scanner sc= null;
-		sc = new Scanner(public_file);
-		while (sc.hasNextLine()) {
-			s = sc.nextLine().split("--");
-			if (s.length == 2)
+		InputStreamReader read = null;
+		BufferedReader br = null;
+		String str = null;
+		read = new InputStreamReader(new FileInputStream(public_file),"UTF-8");
+		br = new BufferedReader(read);
+
+		while ((str = br.readLine())!=null) {
+			if(!flag1)
+				flag1 = true;
+			else {
+				s = str.split("--");
+				System.out.println("群聊".equals(s[0]));
 				publicReply.put(s[0], s[1]);
+			}
 		}
-		sc.close();
-		sc = new Scanner(private_file);
-		while (sc.hasNextLine()) {
-			s = sc.nextLine().split("--");
-			if (s.length == 2)
-				privateReply.put(s[0], s[1]);
+		read.close();
+		br.close();
+		read = new InputStreamReader(new FileInputStream(private_file),"UTF-8");
+		br = new BufferedReader(read);
+		while ((str = br.readLine())!=null) {
+			if(!flag2)
+				flag2 = true;
+			else {
+				s = str.split("--");
+				if (s.length == 2) {
+					privateReply.put(s[0], s[1]);
+				}
+			}
 		}
-		sc.close();
-		sc = new Scanner(sense_file);
-		while (sc.hasNextLine()) {
-			senseReply.add(sc.nextLine());
+		read.close();
+		br.close();
+		read = new InputStreamReader(new FileInputStream(sense_file),"UTF-8");
+		br = new BufferedReader(read);
+		while ((str = br.readLine())!=null) {
+			if(!flag3)
+				flag3 =true;
+			else{
+				senseReply.add(str);
+			}
 		}
-		sc.close();
-		System.out.println(publicReply+","+privateReply+","+senseReply);
+		read.close();
+		br.close();
 	}
 
 	/**
@@ -381,6 +417,7 @@ public class Main {
 					friendId = jsonObject2.getString("UserName");
 					String replyInGroupContent = null, replyToMemberContent = null; // 在群聊中回复的内容和对好友回复的内容
 					String fromId = null, toId = null; // 保存来往用户的id，用于回复消息
+					ImageIcon image=null;
 
 					// 对from等变量进行处理，便于保存消息记录
 					if (from.startsWith("@@")) { // 如果消息来自群聊
@@ -433,56 +470,136 @@ public class Main {
 
 								// 如果开启了自动回复
 								if (autoReplyFlag) {
-									for (String keyword : publicReply.keySet()) // 匹配公共关键词
-										if (content.equals(keyword)) {
-											replyInGroupContent = to + " 您好，" + publicReply.get(keyword);
-											replyMsg(replyInGroupContent, groupID);
-											matchKeyword = true;
-											break;
-										}
+									// 判断是否开启了@模式
+									boolean atFlag = !atModeFlag;
 
-									if (!matchKeyword) // 公共关键词匹配失败，匹配私密关键词
-										for (String keyword : privateReply.keySet())
+									// 如果@模式已开启
+									if (!atFlag) {
+
+										// 是否满足@模式的条件，即内容是否同时包含@符号和特定的分隔符
+										atFlag = content.contains("@") && content.contains(ATDELIM);
+
+										if (atFlag) { // 如果满足@模式的条件
+											String[] atContent = content.split(ATDELIM);
+											String atUser = atContent[0].substring(atContent[0].indexOf('@') + 1);
+											String groupName = null; // 用于跨群指定群名
+											content = atContent.length > 1 ? atContent[1] : "";
+
+											// 消息不能为空，否则不回复
+											atFlag = !content.equals("");
+
+											if (atFlag) { // 判断是否@机器人
+												atFlag = false;
+												for (GroupInfo groupInfo : groupInfoList)
+													if (groupInfo.getGroupID().equals(groupID)) {
+														groupName = groupInfo.getGroupName();
+														for (UserInfo userInfo : groupInfo.getGroup())
+															if (userInfo.getUserId().equals(userID)
+																	&& userInfo.getRemarkName().equals(atUser)) {
+																atFlag = true;
+																break;
+															}
+														break;
+													}
+											}
+
+										/*
+										 * 处理跨群功能，满足"跨群 content"的格式才触发跨群功能，满足
+										 * "跨群回复 群聊名@用户名 content"的格式才触发跨群回复功能
+										 */
+											if (atFlag) {
+												String acrossKeyword = content.indexOf(' ')<0 ? "" :content.substring(0, content.indexOf(' '));
+
+												if (windowUI.getRequestKeyword().equals(acrossKeyword)) {
+													for (GroupInfo groupInfo : groupInfoList)
+														if (!groupInfo.getGroupID().equals(groupID)
+																&& groupInfo.getAcrossGroupFlag()) {
+															replyInGroupContent=groupName + "@" + to + "（"
+																	+ windowUI.getRequestKeyword() + "）："
+																	+ content.substring(content.indexOf(' ') + 1);
+															replyMsg(replyInGroupContent, groupInfo.getGroupID());
+														}
+													atFlag = false; // 取消自动回复，只进行跨群交流
+												} else if (windowUI.getReplyKeyword().equals(acrossKeyword)) {
+													content = content.substring(content.indexOf(' ') + 1);
+													if(content.indexOf(' ')>=0) {
+														String names = content.substring(0, content.indexOf(' '));
+														String[] nameArray=names.split("@");
+														boolean hasName=false;
+														if(nameArray.length>1)
+															for(GroupInfo groupInfo:groupInfoList)
+																if(groupInfo.getGroupName().equals(nameArray[0])) {
+																	for (UserInfo userInfo : groupInfo.getGroup())
+																		if (userInfo.getRemarkName().equals(nameArray[1])) {
+																			hasName=true;
+																			break;
+																		}
+																}
+														if(hasName)
+															for (GroupInfo groupInfo : groupInfoList)
+																if (!groupInfo.getGroupID().equals(groupID)
+																		&& groupInfo.getAcrossGroupFlag()) {
+																	replyInGroupContent = groupName + "@" + to + "（"
+																			+ windowUI.getReplyKeyword() + "）：" + content;
+																	replyMsg(replyInGroupContent, groupInfo.getGroupID());
+																	atFlag = false; // 取消自动回复，只进行跨群交流
+																}
+													}
+												}
+											}
+										}
+									}
+									if (atFlag) { // 如果没有开启@模式，或者满足@模式的条件
+										for (String keyword : publicReply.keySet()) { // 匹配公共关键词
 											if (content.equals(keyword)) {
-												replyInGroupContent = to + " 您好，信息已私信回复您，谢谢！";
+												replyInGroupContent = to + " 您好，" + publicReply.get(keyword);
 												replyMsg(replyInGroupContent, groupID);
-												replyToMemberContent = privateReply.get(keyword);
-												replyMsg(replyToMemberContent, memberID);
 												matchKeyword = true;
 												break;
 											}
+										}
 
-									if (!matchKeyword) { // 关键词匹配失败，智能回复
-										replyInGroupContent = to + " 您好，" + aiChat(content, memberID);
-										replyMsg(replyInGroupContent, groupID);
-									}
-								}
+										if (!matchKeyword) // 公共关键词匹配失败，匹配私密关键词
+											for (String keyword : privateReply.keySet())
+												if (content.equals(keyword)) {
+													replyInGroupContent = to + " 您好，信息已私信回复您，谢谢！";
+													replyMsg(replyInGroupContent, groupID);
+													replyToMemberContent = privateReply.get(keyword);
+													replyMsg(replyToMemberContent, memberID);
+													matchKeyword = true;
+													break;
+												}
 
-								// 如果开启了敏感词警告
-								System.out.println(senseReply);
-								if (sensitiveFlag)
-									for (String senseWord : senseReply) {
-										if (content.equals(senseWord.trim())) {
-											System.out.print("lalal");
-											replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
+										if (!matchKeyword) { // 关键词匹配失败，智能回复
+											replyInGroupContent = to + " 您好，" + aiChat(content, memberID);
 											replyMsg(replyInGroupContent, groupID);
-											matchKeyword = true;
-											break;
 										}
 									}
-							} else if (!userID.equals(fromId))
-								for (UserInfo userInfo : userInfoList)
-									if (userInfo.getUserId().equals(fromId)) { // 来自好友的消息
-										replyToMemberContent = aiChat(content, fromId);
-										replyMsg(replyToMemberContent, fromId);
-									}
+
+									// 如果开启了敏感词警告
+									System.out.println(senseReply);
+									if (sensitiveFlag)
+										for (String senseWord : senseReply) {
+											if (content.equals(senseWord.trim())) {
+												System.out.print("lalal");
+												replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
+												replyMsg(replyInGroupContent, groupID);
+												matchKeyword = true;
+												break;
+											}
+										}
+								} else if (!userID.equals(fromId))
+									for (UserInfo userInfo : userInfoList)
+										if (userInfo.getUserId().equals(fromId)) { // 来自好友的消息
+											replyToMemberContent = aiChat(content, fromId);
+											replyMsg(replyToMemberContent, fromId);
+										}
+							}
 							break;
 						case 3: // 图片消息
 							url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetmsgimg?&MsgID=" + msgID + "&skey="
 									+ skey + "&type=slave";
-							ImageIcon image = new ImageIcon(HttpRequest.get(url).header("Cookie",header).bytes());
-							windowUI.getjTextPane().setCaretPosition(0);
-							windowUI.getjTextPane().insertIcon(image);
+							image = new ImageIcon(HttpRequest.get(url).header("Cookie",header).bytes());
 							content = "\n";
 							break;
 						case 34: // 语音消息
@@ -534,53 +651,64 @@ public class Main {
 					// 保存消息记录
 					try {
 						if (content != null&&isListen) {
-							if (!content.equals("\n")) { // 非图片消息
-								content.replaceAll(",", "，");
-								if ("".equals(groupID)) { // 不是来自群聊的消息
-									boolean fromUserListOrGroupList = false; // 标记消息的来源和接收是否都在好友或者群聊列表里
-									if (userID.equals(fromId)) { // 自己发出的消息
-										for (UserInfo userInfo : userInfoList)
-											if (userInfo.getUserId().equals(toId))
+							content.replaceAll(",", "，");
+							if ("".equals(groupID)) { // 不是来自群聊的消息
+								boolean fromUserListOrGroupList = false; // 标记消息的来源和接收是否都在好友或者群聊列表里
+								if (userID.equals(fromId)) { // 自己发出的消息
+									for (UserInfo userInfo : userInfoList)
+										if (userInfo.getUserId().equals(toId))
+											fromUserListOrGroupList = true;
+									if (!fromUserListOrGroupList)
+										for (GroupInfo groupInfo : groupInfoList)
+											if (groupInfo.getGroupID().equals(toId))
 												fromUserListOrGroupList = true;
-										if (!fromUserListOrGroupList)
-											for (GroupInfo groupInfo : groupInfoList)
-												if (groupInfo.getGroupID().equals(toId))
-													fromUserListOrGroupList = true;
-									} else
-										for (UserInfo fromUserInfo : userInfoList)
-											if (fromUserInfo.getUserId().equals(fromId))
-												fromUserListOrGroupList = true;
-									if (fromUserListOrGroupList) { // 只记录来源和接收都在好友或者群聊列表里的消息
-										recordList.add(df.format(new Date()) + "," + from + "," + to + "," + content);
-										doc.insertString(0, toId.startsWith("@@")
-														? df.format(new Date()) + "\n我在 " + to + " 群中说：" + content + "\n"
-														: df.format(new Date()) + "\n" + from + " 对 " + to + " 说：" + content
-														+ "\n",
-												windowUI.getAttributeSet());
-									}
-								} else {
-									recordList.add(df.format(new Date()) + "," + from + " 群," + to + "," + content);
-									doc.insertString(0,
-											df.format(new Date()) + "\n" + from + " 群中 " + to + " 说：" + content + "\n",
+								} else
+									for (UserInfo fromUserInfo : userInfoList)
+										if (fromUserInfo.getUserId().equals(fromId))
+											fromUserListOrGroupList = true;
+								if (fromUserListOrGroupList) { // 只记录来源和接收都在好友或者群聊列表里的消息
+									recordList.add(df.format(new Date()) + "," + from + "," + to + "," + (content.equals("\n")?"[图片]":content));
+									doc.insertString(doc.getLength(), toId.startsWith("@@")
+													? df.format(new Date()) + "\n我在 " + to + " 群中说：" + (content.equals("\n")?"":content + "\n")
+													: df.format(new Date()) + "\n" + from + " 对 " + to + " 说：" + (content.equals("\n")?"":content + "\n"),
 											windowUI.getAttributeSet());
-									groupID = "";
+									if(content.equals("\n")) {
+										windowUI.getjTextPane().setCaretPosition(doc.getLength());
+										windowUI.getjTextPane().insertIcon(image);
+										doc.insertString(doc.getLength(),"\n",windowUI.getAttributeSet());
+									}
+									windowUI.getjTextPane().setCaretPosition(doc.getLength());
 								}
+							} else {
+								recordList.add(df.format(new Date()) + "," + from + " 群," + to + "," + (content.equals("\n")?"[图片]":content));
+								doc.insertString(doc.getLength(),
+										df.format(new Date()) + "\n" + from + " 群中 " + to + " 说：" + (content.equals("\n")?"":content + "\n"),
+										windowUI.getAttributeSet());
+								if(content.equals("\n")) {
+									windowUI.getjTextPane().setCaretPosition(doc.getLength());
+									windowUI.getjTextPane().insertIcon(image);
+									doc.insertString(doc.getLength(),"\n",windowUI.getAttributeSet());
+								}
+								groupID = "";
+								windowUI.getjTextPane().setCaretPosition(doc.getLength());
 							}
 						}
 
 						if (replyInGroupContent != null&&isListen) {
 							replyInGroupContent.replaceAll(",", "，");
-							doc.insertString(0, df.format(new Date()) + "\n我在 " + from + " 群中对 " + to + " 说："
+							doc.insertString(doc.getLength(), df.format(new Date()) + "\n我在 " + from + " 群中对 " + to + " 说："
 									+ replyInGroupContent + "\n", windowUI.getAttributeSet());
+							windowUI.getjTextPane().setCaretPosition(doc.getLength());
 							recordList.add(df.format(new Date()) + ",我" + "," + to + "(" + from + " 群),"
 									+ replyInGroupContent);
 						}
 
 						if (replyToMemberContent != null&&isListen) {
 							replyToMemberContent.replaceAll(",", "，");
-							doc.insertString(0,
+							doc.insertString(doc.getLength(),
 									df.format(new Date()) + "\n我对 " + from + " 说：" + replyToMemberContent + "\n",
 									windowUI.getAttributeSet());
+							windowUI.getjTextPane().setCaretPosition(doc.getLength());
 							recordList.add(df.format(new Date()) + ",我" + "," + from + "," + replyToMemberContent);
 						}
 					} catch (BadLocationException e) {
@@ -806,6 +934,7 @@ public class Main {
 		String groupName;
 		for (int i = 0; i < contactList.size(); i++) {
 			GroupInfo groupInfo = new GroupInfo();
+			groupInfo.setAcrossGroupFlag(false);
 			groupInfo.setGroupID(contactList.getJSONObject(i).getString("UserName"));
 			groupInfo.setMemberCount(contactList.getJSONObject(i).getInt("MemberCount"));
 			groupName = contactList.getJSONObject(i).getString("NickName");
@@ -815,6 +944,8 @@ public class Main {
 				UserInfo userInfo = new UserInfo();
 				userInfo.setNickName(jsonArray.getJSONObject(j).getString("NickName"));
 				userInfo.setUserId(jsonArray.getJSONObject(j).getString("UserName"));
+				userInfo.setRemarkName(jsonArray.getJSONObject(j).getString("DisplayName"));
+				userInfo.setRemarkName(userInfo.getRemarkName().equals("") ? userInfo.getNickName():userInfo.getRemarkName());
 				groupInfo.getGroup().add(userInfo);
 			}
 			groupInfoList.add(groupInfo);
@@ -924,14 +1055,14 @@ public class Main {
 						//指定时间发布
 						if (!tipRecordList.get(i).getFlag() && windowUI.getDf().format(new Date()).toString()
 								.equals(tipRecordList.get(i).getTime())&&tipRecordList.get(i).getPeriod().equals("")) {
-								for (int j = 0; j < groupInfoList.size(); j++) {
-									if (groupInfoList.get(j).getGroupName().equals(tipRecordList.get(i).getGroupName())) {
-										tipGroupID = groupInfoList.get(j).getGroupID();
-										break;
-									}
+							for (int j = 0; j < groupInfoList.size(); j++) {
+								if (groupInfoList.get(j).getGroupName().equals(tipRecordList.get(i).getGroupName())) {
+									tipGroupID = groupInfoList.get(j).getGroupID();
+									break;
 								}
-								replyMsg(tipRecordList.get(i).getProperty(), tipGroupID);
-								tipRecordList.get(i).setFlag(true);
+							}
+							replyMsg(tipRecordList.get(i).getProperty(), tipGroupID);
+							tipRecordList.get(i).setFlag(true);
 						}
 						//间隔时间发布
 						else if(windowUI.getDf().format(new Date()).toString()
@@ -1130,6 +1261,8 @@ public class Main {
 			windowUI.getSet().addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					windowUI.getAcrossGroupListJPanel().removeAll();
+					windowUI.getSetGroupNamePanel().removeAll();
 					// 对于群名修改面板的组件改变
 					for (final GroupInfo group : groupInfoList) {
 						final JLabel jLabel = new JLabel(group.getGroupName());
@@ -1155,6 +1288,17 @@ public class Main {
 								} else {
 									JOptionPane.showMessageDialog(new Frame(), "错误：新群名一栏不能为空", "错误", JOptionPane.ERROR_MESSAGE);
 								}
+							}
+						});
+						// 添加跨群设置列表
+						final JCheckBox checkBox = new JCheckBox(group.getGroupName());
+						checkBox.setSelected(group.getAcrossGroupFlag());
+						windowUI.getAcrossGroupListJPanel().add(checkBox);
+						checkBox.addChangeListener(new ChangeListener() {
+
+							@Override
+							public void stateChanged(ChangeEvent arg0) {
+								group.setAcrossGroupFlag(checkBox.isSelected());
 							}
 						});
 					}
@@ -1561,17 +1705,17 @@ public class Main {
 				}
 			});
 
-			windowUI.getAutoChat().addActionListener(new ActionListener() {
+			windowUI.getAtModeBtn().addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					if(intelligentReply){
-						intelligentReply = false;
-						windowUI.getAutoChat().setIcon(windowUI.getAutoChat().getDisabledIcon());
-						windowUI.getAutoChat().repaint();
+					if(atModeFlag){
+						atModeFlag = false;
+						windowUI.getAtModeBtn().setIcon(windowUI.getAtModeBtn().getDisabledIcon());
+						windowUI.getAtModeBtn().repaint();
 					}else{
-						intelligentReply = true;
-						windowUI.getAutoChat().setIcon(new ImageIcon(WindowUI.class.getResource("resource/auto_chat.png")));
-						windowUI.getAutoChat().repaint();
+						atModeFlag = true;
+						windowUI.getAtModeBtn().setIcon(new ImageIcon(WindowUI.class.getResource("resource/auto_chat.png")));
+						windowUI.getAtModeBtn().repaint();
 					}
 				}
 			});
@@ -1597,8 +1741,10 @@ public class Main {
 					// timerSendMsgFlag = true;
 					windowUI.getSendByTime().setEnabled(false);
 					windowUI.getDailyTip().setVisible(true);
-					for (int i = 0; i < groupInfoList.size(); i++)
+					for (int i = 0; i < groupInfoList.size(); i++) {
+						windowUI.getGroupNamePeriodArea().addItem(groupInfoList.get(i).getGroupName());
 						windowUI.getGroupNameArea().addItem(groupInfoList.get(i).getGroupName());
+					}
 				}
 			});
 

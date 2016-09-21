@@ -44,7 +44,7 @@ public class WindowUI {
     private static JButton chatJButton = new JButton(new ImageIcon(WindowUI.class.getResource("resource/chat.png")));
     private static JButton addFriend = new JButton(new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
     private static JButton signRecord = new JButton(new ImageIcon(WindowUI.class.getResource("resource/sign_record.png")));
-    private static JButton autoChat = new JButton(new ImageIcon(WindowUI.class.getResource("resource/auto_chat.png")));
+    private static JButton atModeBtn = new JButton(new ImageIcon(WindowUI.class.getResource("resource/auto_chat.png")));
     private static JButton reply = new JButton(new ImageIcon(WindowUI.class.getResource("resource/reply.png")));
     private static JButton warn = new JButton(new ImageIcon(WindowUI.class.getResource("resource/warn.png")));
     private static JButton localWord = new JButton(new ImageIcon(WindowUI.class.getResource("resource/local_word.png")));
@@ -65,6 +65,7 @@ public class WindowUI {
     private static JPanel addPeriodTipPanel = new JPanel();
     private static JPanel propertyTimePanel = new JPanel();
     private static JPanel propertyPeriodPanel = new JPanel();
+    private static JPanel acrossGroupListJPanel = new JPanel(new GridLayout(0, 3, 20, 20));
     private static JPanel wordPanel = new JPanel();
     private static JPanel showGroupPanel = new JPanel();
     private static JPanel invitePanel = new JPanel();
@@ -141,6 +142,11 @@ public class WindowUI {
     private static GridBagConstraints gb = new GridBagConstraints();
     private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
 
+    // 跨群发言关键词和回复关键词
+    private static String requestKeyword;
+    private static String replyKeyword;
+
+
     /**
      * 初始化窗口及组件
      */
@@ -205,6 +211,75 @@ public class WindowUI {
             wordModify.setSize(400, 200);
             wordModify.add(wordPanel);
 
+            JPanel setAcrossGroupJPanel = new JPanel(new GridBagLayout());
+            JPanel setAcrossGroupKeywordJPanel = new JPanel(new GridLayout(0, 3, 20, 20));
+            requestKeyword = "跨群";
+            final JLabel requestKeywordLabel = new JLabel(requestKeyword);
+            requestKeywordLabel.setBorder(BorderFactory.createTitledBorder("现发言关键词"));
+            final JTextField requestKeywordTextArea = new JTextField(18);
+            requestKeywordTextArea.setBorder(BorderFactory.createTitledBorder("新发言关键词"));
+            JButton requestKeywordModifyBtn = new JButton("修改发言关键词");
+            requestKeywordModifyBtn.setForeground(Color.WHITE);
+            requestKeywordModifyBtn.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+            requestKeywordModifyBtn.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String newRequestKeyword = requestKeywordTextArea.getText();
+                    if (newRequestKeyword != null && !"".equals(newRequestKeyword)) {
+                        requestKeywordLabel.setText(newRequestKeyword);
+                        requestKeywordTextArea.setText("");
+                        requestKeyword = newRequestKeyword;
+                        JOptionPane.showMessageDialog(null, "修改发言关键词成功！", "成功", JOptionPane.PLAIN_MESSAGE);
+                    } else
+                        JOptionPane.showMessageDialog(null, "错误：新发言关键词不能为空！", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+            replyKeyword = "跨群回复";
+            final JLabel replyKeywordLabel = new JLabel(replyKeyword);
+            replyKeywordLabel.setBorder(BorderFactory.createTitledBorder("现回复关键词"));
+            final JTextField replyKeywordTextArea = new JTextField(18);
+            replyKeywordTextArea.setBorder(BorderFactory.createTitledBorder("新回复关键词"));
+            JButton replyKeywordModifyBtn = new JButton("修改回复关键词");
+            replyKeywordModifyBtn.setForeground(Color.WHITE);
+            replyKeywordModifyBtn.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+            replyKeywordModifyBtn.addActionListener(new ActionListener() {
+
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String newReplyKeyword = replyKeywordTextArea.getText();
+                    if (newReplyKeyword != null && !"".equals(newReplyKeyword)) {
+                        replyKeywordLabel.setText(newReplyKeyword);
+                        replyKeywordTextArea.setText("");
+                        replyKeyword = newReplyKeyword;
+                        JOptionPane.showMessageDialog(null, "修改回复关键词成功！", "成功", JOptionPane.PLAIN_MESSAGE);
+                    } else
+                        JOptionPane.showMessageDialog(null, "错误：新回复关键词不能为空！", "错误", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+            setAcrossGroupKeywordJPanel.add(requestKeywordLabel);
+            setAcrossGroupKeywordJPanel.add(requestKeywordTextArea);
+            setAcrossGroupKeywordJPanel.add(requestKeywordModifyBtn);
+            setAcrossGroupKeywordJPanel.add(replyKeywordLabel);
+            setAcrossGroupKeywordJPanel.add(replyKeywordTextArea);
+            setAcrossGroupKeywordJPanel.add(replyKeywordModifyBtn);
+            GridBagConstraints acrossGB = new GridBagConstraints();
+            acrossGB.fill = GridBagConstraints.BOTH;
+            acrossGB.gridx = 0;
+            acrossGB.gridy = 0;
+            acrossGB.ipadx = 2;
+            acrossGB.ipady = 50;
+            setAcrossGroupJPanel.add(setAcrossGroupKeywordJPanel, acrossGB);
+            acrossGroupListJPanel.setBorder(BorderFactory.createTitledBorder("跨群群聊列表"));
+            acrossGB.gridy = GridBagConstraints.RELATIVE;
+            acrossGB.ipadx = 555;
+            acrossGB.ipady = 400;
+            acrossGB.insets = new Insets(35, 0, 0, 0);
+            setAcrossGroupJPanel.add(new JScrollPane(acrossGroupListJPanel), acrossGB);
+            setPanel.add("跨群功能设置", setAcrossGroupJPanel);
+
+
+
             chooseGroup.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 100, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
             chooseGroup.setVisible(false);
             chooseGroup.setResizable(false);
@@ -260,8 +335,8 @@ public class WindowUI {
             addFriend.setFocusPainted(false);
             signRecord.setBorder(null);
             signRecord.setFocusPainted(false);
-            autoChat.setBorder(null);
-            autoChat.setFocusPainted(false);
+            atModeBtn.setBorder(null);
+            atModeBtn.setFocusPainted(false);
             localWord.setBorder(null);
             localWord.setFocusPainted(false);
             reply.setBorder(null);
@@ -305,8 +380,8 @@ public class WindowUI {
             jPanel_3.add(j3);
             jPanel_4.setBorder(null);
             jPanel_4.setLayout(new GridLayout(2, 1));
-            jPanel_4.add(autoChat);
-            JLabel j4 = new JLabel("智能聊天");
+            jPanel_4.add(atModeBtn);
+            JLabel j4 = new JLabel("@ 模 式 ");
             j4.setFont(new Font("黑体",1,16));
             jPanel_4.add(j4);
             jPanel_5.setBorder(null);
@@ -388,10 +463,10 @@ public class WindowUI {
             //定时发布的组件设置
             setTimePanel.setLayout(new GridBagLayout());
             setPeriodPanel.setLayout(new GridBagLayout());
-            addTimeTipPanel.setLayout(new GridLayout(0,2, 20, 10));
-            addPeriodTipPanel.setLayout(new GridLayout(0,2,20,10));
-            addTimeTipPanel.setBorder(BorderFactory.createEmptyBorder(20,0,20,0));
-            addPeriodTipPanel.setBorder(BorderFactory.createEmptyBorder(20,0,20,0));
+            addTimeTipPanel.setLayout(new GridLayout(0,2,10,10));
+            addPeriodTipPanel.setLayout(new GridLayout(0,2,10,10));
+            addTimeTipPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+            addPeriodTipPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
             propertyTimePanel.setLayout(new FlowLayout(FlowLayout.LEFT,40,0));
             propertyTimePanel.setBorder(BorderFactory.createEmptyBorder(0,0,20,0));
             propertyPeriodPanel.setLayout(new FlowLayout(FlowLayout.LEFT,40,0));
@@ -451,9 +526,10 @@ public class WindowUI {
             gbc.gridx = 0;
             gbc.gridy = 0;
             gbc.ipady = 40;
-            gbc.ipadx = 250;
+            gbc.ipadx = -20;
             setTimePanel.add(addTimeTipPanel,gbc);
             gbc.ipady = 60;
+            gbc.ipadx = 10;
             setPeriodPanel.add(addPeriodTipPanel,gbc);
             gbc.gridy = 1;
             gbc.ipady = 20;
@@ -819,12 +895,12 @@ public class WindowUI {
         WindowUI.signRecord = signRecord;
     }
 
-    public static JButton getAutoChat() {
-        return autoChat;
+    public static JButton getAtModeBtn() {
+        return atModeBtn;
     }
 
-    public static void setAutoChat(JButton autoChat) {
-        WindowUI.autoChat = autoChat;
+    public static void setAtModeBtn(JButton atModeBtn) {
+        WindowUI.atModeBtn = atModeBtn;
     }
 
     public static JButton getReply() {
@@ -1521,5 +1597,29 @@ public class WindowUI {
 
     public static void setModifyTulingKey(JButton modifyTulingKey) {
         WindowUI.modifyTulingKey = modifyTulingKey;
+    }
+
+    public static JPanel getAcrossGroupListJPanel() {
+        return acrossGroupListJPanel;
+    }
+
+    public static void setAcrossGroupListJPanel(JPanel acrossGroupListJPanel) {
+        WindowUI.acrossGroupListJPanel = acrossGroupListJPanel;
+    }
+
+    public static String getRequestKeyword() {
+        return requestKeyword;
+    }
+
+    public static void setRequestKeyword(String requestKeyword) {
+        WindowUI.requestKeyword = requestKeyword;
+    }
+
+    public static String getReplyKeyword() {
+        return replyKeyword;
+    }
+
+    public static void setReplyKeyword(String replyKeyword) {
+        WindowUI.replyKeyword = replyKeyword;
     }
 }
