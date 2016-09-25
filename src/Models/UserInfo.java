@@ -8,6 +8,15 @@ public class UserInfo {
     private String userId="";
     private String nickName="";
     private String signature="";
+    private boolean acrossGroupFlag = false;
+
+    public boolean isAcrossGroupFlag() {
+        return acrossGroupFlag;
+    }
+
+    public void setAcrossGroupFlag(boolean acrossGroupFlag) {
+        this.acrossGroupFlag = acrossGroupFlag;
+    }
 
     public String getRemarkName() {
         return remarkName;
