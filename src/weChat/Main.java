@@ -475,6 +475,11 @@ public class Main {
                         case 1: // 文本消息
 
                                 if (!"".equals(groupID)&&isListen) { // 来自群聊的消息
+                                try{
+                                    dbConnect.mergeActiveDegree(userName_robot,from,to);
+                                }catch(Exception e){
+                                    e.printStackTrace();
+                                    }
                                 boolean matchKeyword = false; // 标识是否已经匹配到了关键词
                                 //是否为签到
                                 if(content.equals("签到")&&isSign){
@@ -1277,7 +1282,7 @@ public class Main {
                             writer=new OutputStreamWriter(out,encoding);
                         }
                         dbConnect.setStatement(dbConnect.getConnection().createStatement());
-                        String sql = "SELECT  * FROM "+ userName_robot +"_info";
+                        String sql = "SELECT  * FROM "+ userName_robot +"_info WHERE is_sign=1";
                         ResultSet rs = dbConnect.getStatement().executeQuery(sql);
                         loadingDialogJFrame.setLoadingText("读取完成，正在载入签到记录......");
                         while(rs.next())
@@ -1288,6 +1293,70 @@ public class Main {
                         record.setWritable(false);
                         loadingDialogJFrame.dispose();
                         Runtime.getRuntime().exec("cmd /c start " + userName_robot+"_群签到记录.csv");
+                    }catch(Exception e1){
+                        e1.printStackTrace();
+                    }
+                }
+            });
+
+            windowUI.getCheckActiveDegree().addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        loadingDialogJFrame.setLoadingText("正在读取活跃度记录......");
+                        File record =  new File(userName_robot+"_活跃度记录.csv");
+                        if(!record.exists())
+                            record.createNewFile();
+                        record.setWritable(true);
+
+                        FileOutputStream out = new FileOutputStream(record);
+                        OutputStreamWriter writer;
+                        String encoding = System.getProperty("file.encoding");
+                        byte[] bom = new byte[3];
+
+                        if(record.length()==0){
+                            writer = new OutputStreamWriter(out);
+                            if(encoding.equalsIgnoreCase("UTF-8")){
+                                // 添加utf-8的bom头，避免office乱码
+                                bom[0]=(byte) 0xEF;
+                                bom[1]=(byte) 0xBB;
+                                bom[2]=(byte) 0xBF;
+                                writer.write(new String(bom));
+                            }
+                            writer.write("群名,群成员,活跃度,敏感词警告数\r\n");
+                        }
+                        else{
+                            InputStream reader=new FileInputStream(record);
+                            reader.read(bom,0,bom.length);
+                            switch (bom[0]){
+                                case (byte)0xEF:
+                                    encoding="UTF-8";
+                                    break;
+                                case (byte)0xFE:
+                                    encoding="UTF-16BE";
+                                    break;
+                                case (byte)0xFF:
+                                    encoding="UTF-16LE";
+                                    break;
+                                default:
+                                    encoding="GBK";
+                                    break;
+                            }
+                            reader.close();
+                            writer=new OutputStreamWriter(out,encoding);
+                        }
+                        dbConnect.setStatement(dbConnect.getConnection().createStatement());
+                        String sql = "SELECT  * FROM "+ userName_robot +"_info WHERE activeDegree!=0 OR warn!=0";
+                        ResultSet rs = dbConnect.getStatement().executeQuery(sql);
+                        loadingDialogJFrame.setLoadingText("读取完成，正在载入活跃度记录......");
+                        while(rs.next())
+                            writer.write(rs.getString(1)+","+rs.getString(2)+","+rs.getInt(6)+","+rs.getInt(5)+"\r\n");
+                        writer.flush();
+                        writer.close();
+                        out.close();
+                        record.setWritable(false);
+                        loadingDialogJFrame.dispose();
+                        Runtime.getRuntime().exec("cmd /c start " + userName_robot+"_活跃度记录.csv");
                     }catch(Exception e1){
                         e1.printStackTrace();
                     }

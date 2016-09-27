@@ -154,6 +154,7 @@ public class WindowUI {
     private static JButton openSign = new JButton("开启功能");
     private static JButton closeSign = new JButton("关闭功能");
     private static JButton checkSignRecord = new JButton("查看记录");
+    private static JButton checkActiveDegree = new JButton("活跃度统计");
     private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
     private static GridBagConstraints gb = new GridBagConstraints();
     private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
@@ -205,11 +206,11 @@ public class WindowUI {
             gb.gridy = GridBagConstraints.RELATIVE;
             chatIn.setSize(600, 600);
 
-            signFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 200, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 100);
+            signFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 250, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 100);
             signFrame.setVisible(false);
             signFrame.setResizable(false);
             signFrame.setDefaultCloseOperation(signFrame.HIDE_ON_CLOSE);
-            signFrame.setSize(400,200);
+            signFrame.setSize(500,200);
             signFrame.add(signPanel);
 
             dailyTip.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 500, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
@@ -631,9 +632,12 @@ public class WindowUI {
             closeSign.setForeground(Color.white);
             checkSignRecord.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.blue));
             checkSignRecord.setForeground(Color.white);
+            checkActiveDegree.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.lightBlue));
+            checkActiveDegree.setForeground(Color.white);
             signPanel.add(openSign);
             signPanel.add(closeSign);
             signPanel.add(checkSignRecord);
+            signPanel.add(checkActiveDegree);
 
 
             wordPanel.setLayout(new FlowLayout(FlowLayout.CENTER,10,30));
@@ -1836,5 +1840,13 @@ public class WindowUI {
 
     public static void setCheckSignRecord(JButton checkSignRecord) {
         WindowUI.checkSignRecord = checkSignRecord;
+    }
+
+    public static JButton getCheckActiveDegree() {
+        return checkActiveDegree;
+    }
+
+    public static void setCheckActiveDegree(JButton checkActiveDegree) {
+        WindowUI.checkActiveDegree = checkActiveDegree;
     }
 }
