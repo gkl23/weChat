@@ -16,6 +16,7 @@ import javax.swing.text.StyleConstants;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -42,6 +43,7 @@ public class WindowUI {
     private static JFrame groupRemove = null;
     private static JFrame setFrame = null;
     private static JFrame loginFrame = null;
+    private static JFrame signFrame = null;
     private static JButton chatJButton = new JButton(new ImageIcon(WindowUI.class.getResource("resource/chat.png")));
     private static JButton addFriend = new JButton(new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
     private static JButton signRecord = new JButton(new ImageIcon(WindowUI.class.getResource("resource/sign_record.png")));
@@ -68,7 +70,7 @@ public class WindowUI {
     private static JPanel addPeriodTipPanel = new JPanel();
     private static JPanel propertyTimePanel = new JPanel();
     private static JPanel propertyPeriodPanel = new JPanel();
-    private static JPanel acrossGroupListJPanel = new JPanel(new GridLayout(0, 3, 20, 20));
+    private static JPanel acrossGroupListJPanel = new JPanel(new GridLayout(0, 2, 20, 20));
     private static JPanel wordPanel = new JPanel();
     private static JPanel showGroupPanel = new JPanel();
     private static JPanel invitePanel = new JPanel();
@@ -115,6 +117,7 @@ public class WindowUI {
     private static JPanel publicPanel = new JPanel();
     private static JPanel privatePanel = new JPanel();
     private static JPanel sensePanel = new JPanel();
+    private static JPanel signPanel = new JPanel();
     private static JList jList1 = null;
     private static JList jList2 = null;
     private static JList jList3 =null;
@@ -132,8 +135,8 @@ public class WindowUI {
     private static JTextField searchInviteGroup = new JTextField(20);//搜索群组的搜索输入框
     private static JTextField searchRemoveUser = new JTextField(20);//搜索用户的搜索输入框
     private static JTextField searchRemoveGroup = new JTextField(20);//搜索群组的搜索输入框
-    private static JTextField minWarnCount = new JTextField(10);//最小警告次数
-    private static JTextField maxWarnCount = new JTextField(10);//最大警告次数
+    private static JTextField minWarnCount = new JFormattedTextField(NumberFormat.getIntegerInstance());//最小警告次数
+    private static JTextField maxWarnCount = new JFormattedTextField(NumberFormat.getIntegerInstance());//最大警告次数
     private static JComboBox groupNameArea = new JComboBox();//定时发送中选择群名的选择框
     private static JComboBox groupNamePeriodArea = new JComboBox();//间隔发布中选择群名
     private static JButton addTipTimeButton = new JButton("添加");
@@ -148,6 +151,9 @@ public class WindowUI {
     private static JButton register = new JButton("注册");
     private static JButton modifyTulingKey = new JButton("修改");
     private static JButton modifyWarnCount = new JButton("修改");
+    private static JButton openSign = new JButton("开启功能");
+    private static JButton closeSign = new JButton("关闭功能");
+    private static JButton checkSignRecord = new JButton("查看记录");
     private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
     private static GridBagConstraints gb = new GridBagConstraints();
     private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
@@ -174,6 +180,7 @@ public class WindowUI {
             groupRemove = new JFrame("微信机器人--踢人出群");
             setFrame= new JFrame("微信机器人--设置");
             loginFrame = new JFrame("微信机器人--登录");
+            signFrame = new JFrame("微信机器人--签到管理");
 
 
 
@@ -198,6 +205,12 @@ public class WindowUI {
             gb.gridy = GridBagConstraints.RELATIVE;
             chatIn.setSize(600, 600);
 
+            signFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 200, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 100);
+            signFrame.setVisible(false);
+            signFrame.setResizable(false);
+            signFrame.setDefaultCloseOperation(signFrame.HIDE_ON_CLOSE);
+            signFrame.setSize(400,200);
+            signFrame.add(signPanel);
 
             dailyTip.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 500, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
             dailyTip.setVisible(false);
@@ -314,12 +327,12 @@ public class WindowUI {
             groupRemove.add(BorderLayout.CENTER,removePanel);
             groupRemove.add(BorderLayout.SOUTH,remove);
 
-            setFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 400, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
+            setFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 450, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 360);
             setFrame.setVisible(false);
             setFrame.setResizable(false);
             setFrame.setDefaultCloseOperation(setFrame.HIDE_ON_CLOSE);
-            setFrame.setSize(830,700);
-            emptyPanel.setSize(830,700);//用来覆盖原先frame的contentPane的全透明效果
+            setFrame.setSize(900,730);
+            emptyPanel.setSize(900,730);//用来覆盖原先frame的contentPane的全透明效果
             setFrame.getContentPane().add(emptyPanel);
             emptyPanel.setLayout(new BorderLayout());
             emptyPanel.add(BorderLayout.CENTER,setPanel);
@@ -611,6 +624,16 @@ public class WindowUI {
             setTipPanel.add("定时发布",setTimePanel);
             setTipPanel.add("间隔发布",setPeriodPanel);
 
+            signPanel.setLayout(new FlowLayout(FlowLayout.CENTER,10,30));
+            openSign.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
+            openSign.setForeground(Color.white);
+            closeSign.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
+            closeSign.setForeground(Color.white);
+            checkSignRecord.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.blue));
+            checkSignRecord.setForeground(Color.white);
+            signPanel.add(openSign);
+            signPanel.add(closeSign);
+            signPanel.add(checkSignRecord);
 
 
             wordPanel.setLayout(new FlowLayout(FlowLayout.CENTER,10,30));
@@ -665,6 +688,8 @@ public class WindowUI {
             setTuLingAPIPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,50));
             setWarnCount.setLayout(new FlowLayout(FlowLayout.CENTER,20,50));
             warnCount.setFont(new Font("黑体",1,16));
+            minWarnCount.setColumns(10);
+            maxWarnCount.setColumns(10);
             minWarnCount.setUI(new BETextFieldUI());
             maxWarnCount.setUI(new BETextFieldUI());
             minWarnCount.setBorder(BorderFactory.createTitledBorder("最小值"));
@@ -1731,5 +1756,85 @@ public class WindowUI {
 
     public static void setUserNameJPanel(JPanel userNameJPanel) {
         WindowUI.userNameJPanel = userNameJPanel;
+    }
+
+    public static JFrame getSignFrame() {
+        return signFrame;
+    }
+
+    public static void setSignFrame(JFrame signFrame) {
+        WindowUI.signFrame = signFrame;
+    }
+
+    public static JPanel getSetWarnCount() {
+        return setWarnCount;
+    }
+
+    public static void setSetWarnCount(JPanel setWarnCount) {
+        WindowUI.setWarnCount = setWarnCount;
+    }
+
+    public static JLabel getWarnCount() {
+        return warnCount;
+    }
+
+    public static void setWarnCount(JLabel warnCount) {
+        WindowUI.warnCount = warnCount;
+    }
+
+    public static JPanel getSignPanel() {
+        return signPanel;
+    }
+
+    public static void setSignPanel(JPanel signPanel) {
+        WindowUI.signPanel = signPanel;
+    }
+
+    public static JTextField getMinWarnCount() {
+        return minWarnCount;
+    }
+
+    public static void setMinWarnCount(JTextField minWarnCount) {
+        WindowUI.minWarnCount = minWarnCount;
+    }
+
+    public static JTextField getMaxWarnCount() {
+        return maxWarnCount;
+    }
+
+    public static void setMaxWarnCount(JTextField maxWarnCount) {
+        WindowUI.maxWarnCount = maxWarnCount;
+    }
+
+    public static JButton getModifyWarnCount() {
+        return modifyWarnCount;
+    }
+
+    public static void setModifyWarnCount(JButton modifyWarnCount) {
+        WindowUI.modifyWarnCount = modifyWarnCount;
+    }
+
+    public static JButton getOpenSign() {
+        return openSign;
+    }
+
+    public static void setOpenSign(JButton openSign) {
+        WindowUI.openSign = openSign;
+    }
+
+    public static JButton getCloseSign() {
+        return closeSign;
+    }
+
+    public static void setCloseSign(JButton closeSign) {
+        WindowUI.closeSign = closeSign;
+    }
+
+    public static JButton getCheckSignRecord() {
+        return checkSignRecord;
+    }
+
+    public static void setCheckSignRecord(JButton checkSignRecord) {
+        WindowUI.checkSignRecord = checkSignRecord;
     }
 }

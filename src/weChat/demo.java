@@ -21,6 +21,6 @@ import java.util.Vector;
 public class demo {
     public static void main(String args[])throws Exception{
         WindowUI windowUI = new WindowUI();
-        windowUI.getSetFrame().setVisible(true);
+        windowUI.getSignFrame().setVisible(true);
     }
 }

@@ -13,7 +13,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
@@ -32,6 +31,7 @@ import jeasy.analysis.MMAnalyzer;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.jb2011.lnf.beautyeye.ch3_button.BEButtonUI;
+import org.jb2011.lnf.beautyeye.ch4_scroll.BEScrollPaneUI;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -44,8 +44,11 @@ public class Main {
     private static Boolean autoAddFriendFlag = true; // 控制自动添加好友
     private static Boolean autoReplyFlag = true; // 自动回复加智能聊天
     private static Boolean sensitiveFlag = true; // 敏感词警告
-    private static Boolean atModeFlag = false;// 控制@模式
+    private static Boolean atModeFlag = true;// 控制@模式
     private static Boolean isLogin = false;//是否登录
+    private static Boolean isSign = false;//是否开启签到功能
+    private static int  minSenseWarn = 0;
+    private static int maxSenseWarn = 3;
     private static String apiKey="49d5dd04005a4d82b7d5bc30dae96821";
     private static String url;
     private static String timeStamp;
@@ -92,7 +95,7 @@ public class Main {
     private static MMAnalyzer analyzer = new MMAnalyzer(1);
 
     private static WindowUI windowUI;
-    private static Pattern tulingKey = Pattern.compile("[0-9|a-z]");//图灵key是否满足条件
+    private static Pattern tulingKey = Pattern.compile("[0-9|a-z]+");//图灵key是否满足条件
     private static Matcher matcher;
 
     private static DBConnect dbConnect;
@@ -252,21 +255,21 @@ public class Main {
         if (!public_file.exists()) {
             public_file.createNewFile();
             bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(public_file), "UTF-8"));
-            bw.write("请按照格式：  关键词--回复内容   来编写~");
+            bw.write("请按照格式：  关键词--回复内容(一行)    来编写~");
             bw.flush();
             bw.close();
         }
         if (!private_file.exists()) {
             private_file.createNewFile();
             bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (private_file), "UTF-8"));
-            bw.write("请按照格式：  关键词--回复内容   来编写~");
+            bw.write("请按照格式：  关键词--回复内容(一行)   来编写~");
             bw.flush();
             bw.close();
         }
         if (!sense_file.exists()) {
             sense_file.createNewFile();
             bw = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (sense_file), "UTF-8"));
-            bw.write("请按照格式：  敏感词   来编写~");
+            bw.write("请按照格式：  敏感词(一行)    来编写~");
             bw.flush();
             bw.close();
         }
@@ -429,6 +432,7 @@ public class Main {
                             if (groupInfo.getGroupID().equals(from)) {
                                 isListen = groupInfo.getFlag();
                                 groupID = from;
+                                group=groupInfo;
                                 from = groupInfo.getGroupName();
                                 String temp[] = content.split(":");
                                 if (temp.length > 1) {
@@ -437,6 +441,7 @@ public class Main {
                                     for (UserInfo userInfo : groupInfo.getGroup())
                                         if (userInfo.getUserId().equals(memberID)) {
                                             to = userInfo.getNickName();
+                                            member=userInfo;
                                             break;
                                         }
                                 }
@@ -469,11 +474,19 @@ public class Main {
                     switch (msgType) {
                         case 1: // 文本消息
 
-                            if (!"".equals(groupID)&&isListen) { // 来自群聊的消息
+                                if (!"".equals(groupID)&&isListen) { // 来自群聊的消息
                                 boolean matchKeyword = false; // 标识是否已经匹配到了关键词
-
+                                //是否为签到
+                                if(content.equals("签到")&&isSign){
+                                    replyMsg(to+",您已签到,谢谢~",groupID);
+                                    try {
+                                        dbConnect.insertSignRecord(userName_robot, from, to);
+                                    }catch(Exception e){
+                                        e.printStackTrace();
+                                    }
+                                }
                                 // 如果开启了自动回复
-                                if (autoReplyFlag) {
+                                else if (autoReplyFlag) {
                                     // 判断是否开启了@模式
                                     boolean atFlag = !atModeFlag;
 
@@ -494,15 +507,11 @@ public class Main {
 
                                             if (atFlag) { // 判断是否@机器人
                                                 atFlag = false;
-                                                for (GroupInfo groupInfo : groupInfoList)
-                                                    if (groupInfo.getGroupID().equals(groupID)) {
-                                                        groupName = groupInfo.getGroupName();
-                                                        for (UserInfo userInfo : groupInfo.getGroup())
-                                                            if (userInfo.getUserId().equals(userID)
-                                                                    && userInfo.getRemarkName().equals(atUser)) {
-                                                                atFlag = true;
-                                                                break;
-                                                            }
+                                                groupName = group.getGroupName();
+                                                for (UserInfo userInfo : group.getGroup())
+                                                    if (userInfo.getUserId().equals(userID)
+                                                            && userInfo.getRemarkName().equals(atUser)) {
+                                                        atFlag = true;
                                                         break;
                                                     }
                                             }
@@ -513,16 +522,14 @@ public class Main {
 										 */
                                             if (atFlag) {
                                                 String acrossKeyword = content.indexOf(' ')<0 ? "" :content.substring(0, content.indexOf(' '));
-
                                                 if (windowUI.getRequestKeyword().equals(acrossKeyword)&& member.isAcrossGroupFlag()) {
                                                     for (GroupInfo groupInfo : groupInfoList)
                                                         if (groupInfo.getAcrossGroupFlag())
                                                         {
-                                                            replyMsg(
-                                                                    groupName + "@" + to + "（"
-                                                                            + windowUI.getRequestKeyword() + "）："
-                                                                            + content.substring(content.indexOf(' ') + 1),
-                                                                    groupInfo.getGroupID());
+                                                            replyInGroupContent=groupName + "@" + to + "（"
+                                                                    + windowUI.getRequestKeyword() + "）："
+                                                                    + content.substring(content.indexOf(' ') + 1);
+                                                            replyMsg(replyInGroupContent, groupInfo.getGroupID());
 
                                                         }
                                                     atFlag = false; // 取消自动回复，只进行跨群交流
@@ -552,8 +559,10 @@ public class Main {
                                                                 }
                                                     }
                                                 }
-                                            }
-                                        }
+                                            }  else
+                                                atFlag=true;  //取消@模式
+                                        }  else
+                                            atFlag=true;  //取消@模式
                                     }
                                     if (atFlag) { // 如果没有开启@模式，或者满足@模式的条件
                                         for (String keyword : publicReply.keySet()) { // 匹配公共关键词
@@ -586,8 +595,16 @@ public class Main {
                                     if (sensitiveFlag)
                                         for (String senseWord : senseReply) {
                                             if (content.equals(senseWord.trim())) {
-                                                replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
-                                                replyMsg(replyInGroupContent, groupID);
+                                                //数据库更新一次
+                                                try {
+                                                    int c = dbConnect.updateSenseWarn(userName_robot,from,to);
+                                                    if(c<=maxSenseWarn&&c>=minSenseWarn){
+                                                        replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
+                                                        replyMsg(replyInGroupContent, groupID);
+                                                    }
+                                                }catch (Exception e){
+                                                    e.printStackTrace();
+                                                }
                                                 matchKeyword = true;
                                                 break;
                                             }
@@ -605,6 +622,7 @@ public class Main {
 //									+ skey + "&type=slave";
 //							image = new ImageIcon(HttpRequest.get(url).header("Cookie",header).bytes());
 //							content = "\n";
+                            content=null;
                             break;
                         case 34: // 语音消息
                             System.out.println(jsonObject1);
@@ -853,14 +871,12 @@ public class Main {
         header = header.substring(4);// 去掉null
         skey = s.substring(s.indexOf("<skey>"), s.indexOf("</skey>"));
         skey = skey.replace("<skey>", "").trim();
-        // skey = URLEncoder.encode(skey,"gbk");
         wxsid = s.substring(s.indexOf("<wxsid>"), s.indexOf("</wxsid>"));
         wxsid = wxsid.replace("<wxsid>", "").trim();
         wxuin = s.substring(s.indexOf("<wxuin>"), s.indexOf("</wxuin>"));
         wxuin = wxuin.replace("<wxuin>", "").trim();
         pass_ticket = s.substring(s.indexOf("<pass_ticket>"), s.indexOf("</pass_ticket>"));
         pass_ticket = pass_ticket.replace("<pass_ticket>", "").trim();
-        // pass_ticket = URLEncoder.encode(pass_ticket,"gbk");
     }
 
     /**
@@ -1214,7 +1230,7 @@ public class Main {
             windowUI.getMainFrame().add(windowUI.getjPanel(), windowUI.getGb());
             windowUI.getMainFrame().setVisible(true);
             loadingDialogJFrame.dispose();
-            windowUI.getSignRecord().addActionListener(new ActionListener() {
+            windowUI.getCheckSignRecord().addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
@@ -1238,7 +1254,7 @@ public class Main {
                                 bom[2]=(byte) 0xBF;
                                 writer.write(new String(bom));
                             }
-                            writer.write("群名,群成员,签到次数,最近一次签到日期");
+                            writer.write("签到日期,群名,群成员\r\n");
                         }
                         else{
                             InputStream reader=new FileInputStream(record);
@@ -1265,7 +1281,7 @@ public class Main {
                         ResultSet rs = dbConnect.getStatement().executeQuery(sql);
                         loadingDialogJFrame.setLoadingText("读取完成，正在载入签到记录......");
                         while(rs.next())
-                            writer.write(rs.getString(1)+","+rs.getString(2)+","+rs.getInt(4)+","+rs.getTimestamp(5)+"\r\n");
+                            writer.write(rs.getTimestamp(3)+","+rs.getString(1)+","+rs.getString(2)+"\r\n");
                         writer.flush();
                         writer.close();
                         out.close();
@@ -1275,6 +1291,32 @@ public class Main {
                     }catch(Exception e1){
                         e1.printStackTrace();
                     }
+                }
+            });
+            windowUI.getSignRecord().addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if(!isLogin){
+                        JOptionPane.showMessageDialog(null,"请您先登录","信息提示",JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    else {
+                        windowUI.getSignFrame().setVisible(true);
+                        windowUI.getSignRecord().setEnabled(false);
+                    }
+                }
+            });
+            windowUI.getOpenSign().addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    isSign=true;
+                    loadingDialogJFrame.setSuccessText("签到功能已开启！");
+                }
+            });
+            windowUI.getCloseSign().addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    isSign= false;
+                    loadingDialogJFrame.setSuccessText("签到功能已关闭！");
                 }
             });
             windowUI.getLogin().addActionListener(new ActionListener() {
@@ -1290,16 +1332,10 @@ public class Main {
                     try {
                         String s = new String(windowUI.getUserPasswdArea().getPassword());
                         if (dbConnect.checkLogin(windowUI.getUserNameArea().getText().trim(), s.trim())) {
-                            loadingDialogJFrame.setLoadingText("登录成功，正在更新数据...");
-                            try {
-                                for (GroupInfo groupInfo : groupInfoList)
-                                    for (UserInfo userInfo : groupInfo.getGroup())
-                                        dbConnect.updateGroupInfo(windowUI.getUserNameArea().getText().trim(), groupInfo.getGroupName(), userInfo.getNickName());
-                            }catch(Exception e1){
-                                e1.printStackTrace();
-                            }
-                            loadingDialogJFrame.setSuccessText("数据更新完成！");
+                            loadingDialogJFrame.setSuccessText("登陆成功！");
+                            windowUI.getLogin().setEnabled(false);
                             isLogin = true;
+                            isSign = true;
                             userName_robot = windowUI.getUserNameArea().getText().trim();
                             windowUI.getLoginFrame().setVisible(false);
                             windowUI.getUserPasswdArea().setText("");
@@ -1327,17 +1363,12 @@ public class Main {
                         try {
                             String s = new String(windowUI.getUserPasswdArea().getPassword());
                             dbConnect.insertRegisterRecord(windowUI.getUserNameArea().getText().trim(), s.trim());
-                            loadingDialogJFrame.setLoadingText("注册成功，正在创建数据...");
                             userName_robot=  windowUI.getUserNameArea().getText().trim();
-                            try{
-                                for(GroupInfo groupInfo:groupInfoList)
-                                    for(UserInfo userInfo:groupInfo.getGroup())
-                                        dbConnect.insertGroupInfo(windowUI.getUserNameArea().getText().trim(),groupInfo.getGroupName(),userInfo.getNickName());
-                            }catch (Exception e1){
-                                e1.printStackTrace();
-                                JOptionPane.showMessageDialog(null,"数据创建出现问题，请稍后再试","信息提示",JOptionPane.ERROR_MESSAGE);
-                            }
-                            loadingDialogJFrame.setSuccessText("数据录入完成！");
+                            loadingDialogJFrame.setSuccessText("恭喜：您已注册成功！");
+                            isLogin = true;
+                            isSign =true;
+                            windowUI.getLogin().setEnabled(false);
+                            windowUI.getLogin().setForeground(Color.black);
                             windowUI.getLoginFrame().setVisible(false);
                             windowUI.getUserPasswdArea().setText("");
                         }catch (Exception e1){
@@ -1365,14 +1396,20 @@ public class Main {
             windowUI.getSet().addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+                    windowUI.getSetFrame().setVisible(true);
+                    windowUI.getSet().setEnabled(false);
                     windowUI.getAcrossGroupListJPanel().removeAll();
                     windowUI.getSetGroupNamePanel().removeAll();
                     // 对于群名修改面板的组件改变
-                    JPanel groupListJPanel = new JPanel(new GridLayout(0, 1, 0, 10)); // 群名列表
+                    JPanel groupListJPanel = new JPanel(); // 群名列表
+                    groupListJPanel.setLayout(new BoxLayout(groupListJPanel,BoxLayout.Y_AXIS));
                     JScrollPane groupListScrollPane = new JScrollPane(groupListJPanel);
+                    groupListScrollPane.setUI(new BEScrollPaneUI());
                     groupListScrollPane.setBorder(BorderFactory.createTitledBorder("群聊列表"));
-                    final JPanel groupMemberListJPanel = new JPanel(new GridLayout(0, 1, 0, 10)); // 群成员列表
+                    final JPanel groupMemberListJPanel = new JPanel(); // 群成员列表
+                    groupMemberListJPanel.setLayout(new BoxLayout(groupMemberListJPanel,BoxLayout.Y_AXIS));
                     JScrollPane groupMemberListScrollPane = new JScrollPane(groupMemberListJPanel);
+                    groupMemberListScrollPane.setUI(new BEScrollPaneUI());
                     groupMemberListScrollPane.setBorder(BorderFactory.createTitledBorder("群成员列表"));
                     windowUI.getAcrossGroupListJPanel().add(groupListScrollPane);
                     windowUI.getAcrossGroupListJPanel().add(groupMemberListScrollPane);
@@ -1404,7 +1441,7 @@ public class Main {
                         // 添加跨群设置列表
                         final JCheckBox groupCheckBox = new JCheckBox(group.getGroupName());
                         groupCheckBox.setSelected(group.getAcrossGroupFlag());
-                        windowUI.getAcrossGroupListJPanel().add(groupCheckBox);
+                        groupListJPanel.add(groupCheckBox);
                         groupCheckBox.addChangeListener(new ChangeListener() {
                             @Override
                             public void stateChanged(ChangeEvent arg0) {
@@ -1470,9 +1507,9 @@ public class Main {
                     windowUI.getGb().ipadx=355;
                     windowUI.getGb().gridx =0;
                     windowUI.getGb().gridy =0;
-                    windowUI.getInvitePanel().add(windowUI.getSearchInviteUser(),windowUI.getGb());
+//                    windowUI.getInvitePanel().add(windowUI.getSearchInviteUser(),windowUI.getGb());
                     windowUI.getGb().gridx =1;
-                    windowUI.getInvitePanel().add(windowUI.getSearchInviteGroup(),windowUI.getGb());
+//                    windowUI.getInvitePanel().add(windowUI.getSearchInviteGroup(),windowUI.getGb());
                     windowUI.getGb().ipady = 450;
                     windowUI.getGb().ipadx= 330;
                     windowUI.getGb().gridx = 0;
@@ -1635,9 +1672,9 @@ public class Main {
                     windowUI.getGb().ipadx=355;
                     windowUI.getGb().gridx =0;
                     windowUI.getGb().gridy =0;
-                    windowUI.getRemovePanel().add(windowUI.getSearchRemoveGroup(),windowUI.getGb());
+//                    windowUI.getRemovePanel().add(windowUI.getSearchRemoveGroup(),windowUI.getGb());
                     windowUI.getGb().gridx =1;
-                    windowUI.getRemovePanel().add(windowUI.getSearchRemoveUser(),windowUI.getGb());
+//                    windowUI.getRemovePanel().add(windowUI.getSearchRemoveUser(),windowUI.getGb());
                     windowUI.getGb().ipady = 450;
                     windowUI.getGb().ipadx= 330;
                     windowUI.getGb().gridx = 0;
@@ -1944,6 +1981,13 @@ public class Main {
 
                 }
             });
+            windowUI.getModifyWarnCount().addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    minSenseWarn = Integer.parseInt(windowUI.getMinWarnCount().getText());
+                    maxSenseWarn = Integer.parseInt(windowUI.getMaxWarnCount().getText());
+                }
+            });
             windowUI.getModifyTulingKey().addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -1958,6 +2002,7 @@ public class Main {
                             windowUI.getTulingKeyArea().setText("");
                         }
                         apiKey = windowUI.getTulingKeyArea().getText();
+                        loadingDialogJFrame.setSuccessText("图灵key已经成功修改！");
                     }
                     else
                         apiKey = "49d5dd04005a4d82b7d5bc30dae96821";
@@ -2053,14 +2098,6 @@ public class Main {
                     } catch (Exception e1) {
                         e1.printStackTrace();
                     }
-                }
-            });
-
-            windowUI.getSet().addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    windowUI.getSetFrame().setVisible(true);
-                    windowUI.getSet().setEnabled(false);
                 }
             });
 
@@ -2188,6 +2225,42 @@ public class Main {
 
                 @Override
                 public void windowClosed(WindowEvent e) {
+                }
+
+                @Override
+                public void windowIconified(WindowEvent e) {
+
+                }
+
+                @Override
+                public void windowDeiconified(WindowEvent e) {
+
+                }
+
+                @Override
+                public void windowActivated(WindowEvent e) {
+
+                }
+
+                @Override
+                public void windowDeactivated(WindowEvent e) {
+
+                }
+            });
+            windowUI.getSignFrame().addWindowListener(new WindowListener() {
+                @Override
+                public void windowOpened(WindowEvent e) {
+
+                }
+
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    windowUI.getSignRecord().setEnabled(true);
+                }
+
+                @Override
+                public void windowClosed(WindowEvent e) {
+                    windowUI.getSignRecord().setEnabled(true);
                 }
 
                 @Override
