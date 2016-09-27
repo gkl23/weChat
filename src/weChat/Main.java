@@ -2055,6 +2055,7 @@ public class Main {
                 public void actionPerformed(ActionEvent e) {
                     minSenseWarn = Integer.parseInt(windowUI.getMinWarnCount().getText());
                     maxSenseWarn = Integer.parseInt(windowUI.getMaxWarnCount().getText());
+                    loadingDialogJFrame.setSuccessText("敏感词上下限修改成功！");
                 }
             });
             windowUI.getModifyTulingKey().addActionListener(new ActionListener() {

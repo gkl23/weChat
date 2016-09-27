@@ -86,6 +86,7 @@ public class WindowUI {
     private static JPanel setTuLingAPIPanel = new JPanel();
     private static JPanel setWarnCount = new JPanel();
     private static JScrollPane jScrollPane;
+    private static JScrollPane groupJScrollPane;
     private static JScrollPane tipTimeJScrollPane;
     private static JScrollPane tipPeriodJScrollPane;
     private static JScrollPane timePropertyJScrollPane;//定时发送内容的下拉框
@@ -308,7 +309,6 @@ public class WindowUI {
             chooseGroup.setVisible(false);
             chooseGroup.setResizable(false);
             chooseGroup.setDefaultCloseOperation(chooseGroup.HIDE_ON_CLOSE);
-            chooseGroup.add(showGroupPanel);
 
             groupInvite.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 400, Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
             groupInvite.setVisible(false);
@@ -660,9 +660,13 @@ public class WindowUI {
             wordPanel.add(privatePanel);
             wordPanel.add(sensePanel);
 
-
-            showGroupPanel.setLayout(new GridLayout(0,1,20,20));
-            showGroupPanel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+            showGroupPanel.setLayout(new BoxLayout(showGroupPanel,BoxLayout.Y_AXIS));
+            groupJScrollPane = new JScrollPane(showGroupPanel);
+            groupJScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            groupJScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            groupJScrollPane.setUI(new BEScrollPaneUI());
+            groupJScrollPane.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+            chooseGroup.add(groupJScrollPane);
 
             invitePanel.setLayout(new GridBagLayout());
             invite.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
