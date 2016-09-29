@@ -11,8 +11,17 @@ public class GroupInfo {
     private Boolean flag = false;
     private String groupID = "";
     private String groupName="";
+    private String groupNumberId ="";
     private int memberCount;
     private List<UserInfo> group = new ArrayList<>();
+
+    public String getGroupNumberId() {
+        return groupNumberId;
+    }
+
+    public void setGroupNumberId(String groupNumberId) {
+        this.groupNumberId = groupNumberId;
+    }
 
     public Boolean getAcrossGroupFlag() {
         return acrossGroupFlag;

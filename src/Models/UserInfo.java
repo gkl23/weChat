@@ -9,6 +9,15 @@ public class UserInfo {
     private String nickName="";
     private String signature="";
     private boolean acrossGroupFlag = false;
+    private String uin = "";
+
+    public String getUin() {
+        return uin;
+    }
+
+    public void setUin(String uin) {
+        this.uin = uin;
+    }
 
     public boolean isAcrossGroupFlag() {
         return acrossGroupFlag;

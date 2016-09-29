@@ -68,8 +68,8 @@ public class Main {
     private static String msgID = "";
     private static final String ATDELIM = " "; // ！！注意，@消息的分隔符并不是空格，所以设为常量
     private static final int maxSize = 5;
-    private static List<String> activeGroupId = new ArrayList<>();
-    private static List<String> unactiveGroupId = new ArrayList<>();
+    private static List<String> groupId = new ArrayList<>();
+    private static List<String> groupNumberId = new ArrayList<>();
     private static List<String> recordList = new ArrayList<>();
     private static List<UserInfo> userInfoList = new ArrayList<>();
     private static List<GroupInfo> groupInfoList = new ArrayList<>();
@@ -476,7 +476,7 @@ public class Main {
 
                                 if (!"".equals(groupID)&&isListen) { // 来自群聊的消息
                                 try{
-                                    dbConnect.mergeActiveDegree(userName_robot,from,to);
+                                    dbConnect.mergeActiveDegree(userName_robot,group.getGroupNumberId(),member.getUin());
                                 }catch(Exception e){
                                     e.printStackTrace();
                                     }
@@ -485,7 +485,7 @@ public class Main {
                                 if(content.equals("签到")&&isSign){
                                     replyMsg(to+",您已签到,谢谢~",groupID);
                                     try {
-                                        dbConnect.insertSignRecord(userName_robot, from, to);
+                                        dbConnect.insertSignRecord(userName_robot,group.getGroupNumberId(),member.getUin());
                                     }catch(Exception e){
                                         e.printStackTrace();
                                     }
@@ -602,7 +602,7 @@ public class Main {
                                             if (content.equals(senseWord.trim())) {
                                                 //数据库更新一次
                                                 try {
-                                                    int c = dbConnect.updateSenseWarn(userName_robot,from,to);
+                                                    int c = dbConnect.updateSenseWarn(userName_robot,group.getGroupNumberId(),member.getUin());
                                                     if(c<=maxSenseWarn&&c>=minSenseWarn){
                                                         replyInGroupContent = to + " 您好，" + "您言语有不当之处，警告一次";
                                                         replyMsg(replyInGroupContent, groupID);
@@ -648,14 +648,15 @@ public class Main {
                             break;
                         case 51: // 状态提醒消息
                             String[] statusNotifyUserNames = jsonObject1.getString("StatusNotifyUserName").split(","); // 获取不在联系人列表里的群聊
+                            String[] groupIdList = jsonObject1.getString("Content").split(";")[6].split(",");//获取带groupID的字符串
                             if (statusNotifyUserNames.length > 1) { // 如果需要提醒的用户多于1个，说明是群聊列表
                                 content = null;
                                 if (!hasNotified) {
-                                    for (String statusNotifyUserName : statusNotifyUserNames)
-                                        if (statusNotifyUserName.startsWith("@@")
-                                                && !activeGroupId.contains(statusNotifyUserName)
-                                                && !unactiveGroupId.contains(statusNotifyUserName))
-                                            unactiveGroupId.add(statusNotifyUserName);
+                                    for (int index = 0;index<statusNotifyUserNames.length;index++)
+                                        if (statusNotifyUserNames[i].startsWith("@@")) {
+                                            groupId.add(statusNotifyUserNames[i]);
+                                            groupNumberId.add(groupIdList[i]);
+                                        }
                                     getGroupList();
                                 }
                                 hasNotified = true;
@@ -837,7 +838,7 @@ public class Main {
     }
 
     /**
-     * 得到最近联系人的名单
+     * 得到好友的名单
      */
     private void getRecentList() {
         url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxgetcontact?lang=zh_CN&pass_ticket=" + pass_ticket + "&r="
@@ -854,10 +855,7 @@ public class Main {
                 userInfo.setUserId(jsonObject.getString("UserName"));
                 userInfo.setSignature(jsonObject.getString("Signature"));
                 userInfoList.add(userInfo);
-            } else if (jsonObject.getString("UserName").contains("@@")
-                    && !activeGroupId.contains(jsonObject.getString("UserName"))
-                    && !unactiveGroupId.contains(jsonObject.getString("UserName")))
-                unactiveGroupId.add(jsonObject.getString("UserName"));
+            }
         }
     }
 
@@ -906,13 +904,6 @@ public class Main {
             if (usrname.contains("UserName"))
                 usrName.add(usrname);
         }
-        // 获取一部分群组ID
-        for (String id : usrName) {
-            if (id.contains("@@")) {
-                String sinId = (id.split(":"))[1].replace("\"", "").trim();
-                activeGroupId.add(sinId);
-            }
-        }
         // 获取userID
         JSONObject sc = JSONObject.fromObject(s);
         JSONObject user = sc.getJSONObject("User");
@@ -937,20 +928,15 @@ public class Main {
                 + "&lang=zh_CN&pass_ticket=" + pass_ticket;
         js.clear();
         js.put("BaseRequest", baseRequest);
-        js.put("Count", activeGroupId.size() + unactiveGroupId.size());
+        js.put("Count", groupId.size());
         JSONArray groupJs = new JSONArray();
-        for (int i = 0; i < activeGroupId.size(); i++) {
+        for (int i = 0; i < groupId.size(); i++) {
             JSONObject single = new JSONObject();
-            single.put("UserName", activeGroupId.get(i));
+            single.put("UserName", groupId.get(i));
             single.put("ChatRoomId", "");
             groupJs.add(single);
         }
-        for (int i = 0; i < unactiveGroupId.size(); i++) {
-            JSONObject single = new JSONObject();
-            single.put("UserName", unactiveGroupId.get(i));
-            single.put("EncryChatRoomId", "");
-            groupJs.add(single);
-        }
+
         js.put("List", groupJs);
         String s = this.sendPostRequest(url, js);
         JSONObject jsonObject = JSONObject.fromObject(s);
@@ -959,21 +945,55 @@ public class Main {
         for (int i = 0; i < contactList.size(); i++) {
             GroupInfo groupInfo = new GroupInfo();
             groupInfo.setAcrossGroupFlag(false);
+            groupInfo.setGroupNumberId(groupNumberId.get(i));
             groupInfo.setGroupID(contactList.getJSONObject(i).getString("UserName"));
             groupInfo.setMemberCount(contactList.getJSONObject(i).getInt("MemberCount"));
             groupName = contactList.getJSONObject(i).getString("NickName");
             groupInfo.setGroupName(groupName.equals("") ? "群聊" : groupName);
-            JSONArray jsonArray = contactList.getJSONObject(i).getJSONArray("MemberList");
-            for (int j = 0; j < jsonArray.size(); j++) {
-                UserInfo userInfo = new UserInfo();
-                userInfo.setNickName(jsonArray.getJSONObject(j).getString("NickName"));
-                userInfo.setUserId(jsonArray.getJSONObject(j).getString("UserName"));
-                userInfo.setRemarkName(jsonArray.getJSONObject(j).getString("DisplayName"));
-                userInfo.setRemarkName(userInfo.getRemarkName().equals("") ? userInfo.getNickName():userInfo.getRemarkName());
-                groupInfo.getGroup().add(userInfo);
-            }
+            this.getUin(groupInfo);
             groupInfoList.add(groupInfo);
         }
+    }
+
+    /**
+     * 获取一个群中的所有人的uin
+     * @param groupInfo
+     */
+    private void getUin(GroupInfo groupInfo) {
+        url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxoplog?pass_ticket=" + pass_ticket;
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("UserName", groupInfo.getGroupID());
+        jsonObject.put("CmdId", 3);
+        jsonObject.put("OP", 1);
+        jsonObject.put("BaseRequest", baseRequest);
+        String s = httpRequest.post(url).header("Cookie", header).send(jsonObject.toString()).body();
+        JSONObject replyJson = JSONObject.fromObject(s);
+        int ret = replyJson.getJSONObject("BaseResponse").getInt("Ret");
+        if (ret == 0) {
+            replyMsg("获取成功", "filehelper");
+            url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxsync?sid=" + wxsid + "&skey=" + skey
+                    + "&lang=zh_CN&pass_ticket=" + pass_ticket;
+            js.clear();
+            js.put("BaseRequest", baseRequest);
+            js.put("SyncKey", syncKey);
+            js.put("rr", ~System.currentTimeMillis());
+            s = sendPostRequest(url, js, header);
+            replyJson = JSONObject.fromObject(s);
+            JSONArray uinArray = replyJson.getJSONObject("ModContactList").getJSONArray("MemberList");
+            for (int j = 0; j < uinArray.size(); j++) {
+                UserInfo userInfo = new UserInfo();
+                userInfo.setUin(uinArray.getJSONObject(j).getString("Uin"));
+                userInfo.setNickName(uinArray.getJSONObject(j).getString("NickName"));
+                userInfo.setUserId(uinArray.getJSONObject(j).getString("UserName"));
+                userInfo.setRemarkName(uinArray.getJSONObject(j).getString("DisplayName"));
+                userInfo.setRemarkName(userInfo.getRemarkName().equals("") ? userInfo.getNickName() : userInfo.getRemarkName());
+                groupInfo.getGroup().add(userInfo);
+            }
+        } else {
+            loadingDialogJFrame.setSuccessText("重试消息");
+            getUin(groupInfo);
+        }
+
     }
 
     /**
@@ -1285,8 +1305,18 @@ public class Main {
                         String sql = "SELECT  * FROM "+ userName_robot +"_info WHERE is_sign=1";
                         ResultSet rs = dbConnect.getStatement().executeQuery(sql);
                         loadingDialogJFrame.setLoadingText("读取完成，正在载入签到记录......");
-                        while(rs.next())
-                            writer.write(rs.getTimestamp(3)+","+rs.getString(1)+","+rs.getString(2)+"\r\n");
+                        while(rs.next()) {
+                            out:for(GroupInfo groupInfo:groupInfoList){
+                                if(groupInfo.getGroupNumberId().equals(rs.getString(1))){
+                                    in:for(UserInfo userInfo:groupInfo.getGroup()){
+                                        if(userInfo.getUin().equals(rs.getString(2))) {
+                                            writer.write(rs.getTimestamp(3) + "," + groupInfo.getGroupName() + "," + userInfo.getNickName() + "\r\n");
+                                            break out;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         writer.flush();
                         writer.close();
                         out.close();
@@ -1349,8 +1379,18 @@ public class Main {
                         String sql = "SELECT  * FROM "+ userName_robot +"_info WHERE activeDegree!=0 OR warn!=0";
                         ResultSet rs = dbConnect.getStatement().executeQuery(sql);
                         loadingDialogJFrame.setLoadingText("读取完成，正在载入活跃度记录......");
-                        while(rs.next())
-                            writer.write(rs.getString(1)+","+rs.getString(2)+","+rs.getInt(6)+","+rs.getInt(5)+"\r\n");
+                        while(rs.next()) {
+                            out:for(GroupInfo groupInfo:groupInfoList){
+                                if(groupInfo.getGroupNumberId().equals(rs.getString(1))){
+                                    in:for(UserInfo userInfo:groupInfo.getGroup()){
+                                        if(userInfo.getUin().equals(rs.getString(2))) {
+                                            writer.write(groupInfo.getGroupName() + "," + userInfo.getNickName() + "," + userInfo.getNickName() + rs.getInt(6) + "," + rs.getInt(5) + "\r\n");
+                                            break out;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         writer.flush();
                         writer.close();
                         out.close();
