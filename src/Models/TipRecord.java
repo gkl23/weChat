@@ -4,34 +4,31 @@ package Models;
  * Created by huzhejie on 2016/8/8.
  */
 public class TipRecord {
-	private Boolean flag;
-	private String time;//可以做指定时间，也可以做间隔发布的起始时间
-	private String period;//间隔时间
+	private String time;// 可以做指定时间，也可以做间隔发布的起始时间
+	private int period;// 间隔时间
 	private String groupName;
 	private String property;
 
 	public TipRecord() {
-		flag = false;
 		time = "";
 		groupName = "";
 		property = "";
-		period = "";
+		period = 0;
 	}
 
-	public String getPeriod() {
+	public TipRecord(String time, int period, String groupName, String property) {
+		this.time = time;
+		this.period = period;
+		this.groupName = groupName;
+		this.property = property;
+	}
+
+	public int getPeriod() {
 		return period;
 	}
 
-	public void setPeriod(String period) {
+	public void setPeriod(int period) {
 		this.period = period;
-	}
-
-	public Boolean getFlag() {
-		return flag;
-	}
-
-	public void setFlag(Boolean flag) {
-		this.flag = flag;
 	}
 
 	public String getTime() {

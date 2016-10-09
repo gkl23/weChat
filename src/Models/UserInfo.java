@@ -6,7 +6,6 @@ package Models;
 public class UserInfo {
     private String remarkName = "";
     private String userId="";
-    private String nickName="";
     private String signature="";
     private boolean acrossGroupFlag = false;
     private String uin = "";
@@ -41,14 +40,6 @@ public class UserInfo {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public String getNickName() {
-        return nickName;
-    }
-
-    public void setNickName(String nickName) {
-        this.nickName = nickName;
     }
 
     public String getSignature() {

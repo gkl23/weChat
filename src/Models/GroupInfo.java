@@ -7,67 +7,76 @@ import java.util.List;
  * Created by huzhejie on 2016/7/19.
  */
 public class GroupInfo {
-    private Boolean acrossGroupFlag;//开启跨群功能
-    private Boolean flag = false;
-    private String groupID = "";
-    private String groupName="";
-    private String groupNumberId ="";
-    private int memberCount;
-    private List<UserInfo> group = new ArrayList<>();
+	private Boolean hasMemberUin = false;
+	private Boolean acrossGroupFlag;// 开启跨群功能
+	private Boolean flag = false;
+	private String groupID = ""; // 加密的群聊id
+	private String groupName = "";
+	private String groupNumberId = ""; // 解密的群聊id
+	private int memberCount;
+	private List<UserInfo> group = new ArrayList<>();
 
-    public String getGroupNumberId() {
-        return groupNumberId;
-    }
+	public Boolean getHasMemberUin() {
+		return hasMemberUin;
+	}
 
-    public void setGroupNumberId(String groupNumberId) {
-        this.groupNumberId = groupNumberId;
-    }
+	public void setHasMemberUin(Boolean hasMemberUin) {
+		this.hasMemberUin = hasMemberUin;
+	}
 
-    public Boolean getAcrossGroupFlag() {
-        return acrossGroupFlag;
-    }
+	public String getGroupNumberId() {
+		return groupNumberId;
+	}
 
-    public void setAcrossGroupFlag(Boolean acrossGroupFlag) {
-        this.acrossGroupFlag = acrossGroupFlag;
-    }
+	public void setGroupNumberId(String groupNumberId) {
+		this.groupNumberId = groupNumberId;
+	}
 
-    public Boolean getFlag() {
-        return flag;
-    }
+	public Boolean getAcrossGroupFlag() {
+		return acrossGroupFlag;
+	}
 
-    public void setFlag(Boolean flag) {
-        this.flag = flag;
-    }
+	public void setAcrossGroupFlag(Boolean acrossGroupFlag) {
+		this.acrossGroupFlag = acrossGroupFlag;
+	}
 
-    public String getGroupID() {
-        return groupID;
-    }
+	public Boolean getFlag() {
+		return flag;
+	}
 
-    public void setGroupID(String groupID) {
-        this.groupID = groupID;
-    }
+	public void setFlag(Boolean flag) {
+		this.flag = flag;
+	}
 
-    public String getGroupName() {
-        return groupName;
-    }
+	public String getGroupID() {
+		return groupID;
+	}
 
-    public void setGroupName(String groupName) {
-        this.groupName = groupName;
-    }
+	public void setGroupID(String groupID) {
+		this.groupID = groupID;
+	}
 
-    public int getMemberCount() {
-        return memberCount;
-    }
+	public String getGroupName() {
+		return groupName;
+	}
 
-    public void setMemberCount(int memberCount) {
-        this.memberCount = memberCount;
-    }
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
 
-    public List<UserInfo> getGroup() {
-        return group;
-    }
+	public int getMemberCount() {
+		return memberCount;
+	}
 
-    public void setGroup(List<UserInfo> group) {
-        this.group = group;
-    }
+	public void setMemberCount(int memberCount) {
+		this.memberCount = memberCount;
+	}
+
+	public List<UserInfo> getGroup() {
+		return group;
+	}
+
+	public void setGroup(List<UserInfo> group) {
+		this.group = group;
+	}
 }

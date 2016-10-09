@@ -49,6 +49,8 @@ public class LoadingDialogJFrame extends JFrame {
 	public void setLoadingText(String loadingText) {
 		if (!isVisible())
 			setVisible(true);
+		if (!loadingImg.isVisible())
+			loadingImg.setVisible(true);
 		loadingLabel.setText(loadingText);
 	}
 
