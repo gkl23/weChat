@@ -7,7 +7,7 @@ import java.util.List;
  * Created by huzhejie on 2016/7/19.
  */
 public class GroupInfo {
-	private Boolean hasMemberUin = false;
+	private Boolean hasMemberUin = false;//是否收集了群成员Uin
 	private Boolean acrossGroupFlag;// 开启跨群功能
 	private Boolean flag = false;
 	private String groupID = ""; // 加密的群聊id

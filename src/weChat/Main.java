@@ -973,6 +973,7 @@ public class Main {
 		}
 		if(!updateFriend) {
 			groupInfoList.clear();
+			while(this.getGroupUin());
 		}
 	}
 
@@ -1082,11 +1083,45 @@ public class Main {
 	}
 
 	/**
-	 * 获取一个群中的所有人的uin及群数字id
+	 * 获取群中的所有人的uin及群数字id
 	 *
 	 */
-	private void GetGroupUin(String GroupId){
-
+	private Boolean getGroupUin(){
+		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxsync?sid=" + wxsid + "&skey=" + skey
+				+ "&lang=zh_CN&pass_ticket=" + pass_ticket;
+		js.clear();
+		js.put("BaseRequest", baseRequest);
+		js.put("SyncKey", syncKey);
+		js.put("rr", ~System.currentTimeMillis());
+		String s = sendPostRequest(url, js, header);
+		syncKeyList = new StringBuffer();
+		syncKeyTransfer(s);
+		JSONObject replyJson = JSONObject.fromObject(s);
+		if(replyJson.getJSONArray("ModContactList").size()==0){
+			return false;
+		}
+		else {
+			for (int i = 0; i < replyJson.getJSONArray("ModContactList").size(); i++) {
+				GroupInfo groupInfo = new GroupInfo();
+				JSONArray uinArray = replyJson.getJSONArray("ModContactList").getJSONObject(i).getJSONArray("MemberList");
+				groupInfo.setGroupName(replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("NickName"));
+				groupInfo.setHasMemberUin(true);
+				groupInfo.setAcrossGroupFlag(false);
+				groupInfo.setGroupID(replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("UserName"));
+				groupInfo.setGroupNumberId(groupIdNumberId.get(groupInfo.getGroupID()));
+				groupIdName.put(groupIdNumberId.get(groupInfo.getGroupID()),replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("NickName"));
+				getGroupUinId.add(replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("UserName"));
+				for (int k = 0; k < uinArray.size(); k++) {
+					UserInfo userInfo = new UserInfo();
+					userInfo.setUin(uinArray.getJSONObject(k).getString("Uin"));
+					userInfo.setUserId(uinArray.getJSONObject(k).getString("UserName"));
+					userInfo.setRemarkName(uinArray.getJSONObject(k).getString("DisplayName").equals("") ? uinArray.getJSONObject(k).getString("NickName") : uinArray.getJSONObject(k).getString("DisplayName"));
+					groupInfo.getGroup().add(userInfo);
+				}
+				groupInfoList.add(groupInfo);
+			}
+			return true;
+		}
 	}
 
 	/**
