@@ -416,43 +416,6 @@ public class Main {
 			syncKeyTransfer(s);
 			JSONObject jsonObject = JSONObject.fromObject(s);
 
-//			/*
-//			 * 获取群成员uin
-//			 */
-//			int modContactCount = jsonObject.getInt("ModContactCount");
-//			if (modContactCount > 0) { // 如果有联系人信息更新
-//				JSONArray modContactList = jsonObject.getJSONArray("ModContactList");
-//				int i, modContactListLen = modContactList.size(), j, memberListLen;
-//				JSONObject modContact, member;
-//				JSONArray memberList;
-//				String groupUserName, memberUserName;
-//				GroupInfo groupInfo = null;
-//				for (i = 0; i < modContactListLen; i++) {
-//					modContact = modContactList.getJSONObject(i);
-//					groupUserName = modContact.getString("UserName");
-//					if (groupUserName.startsWith("@@")) { // 如果是群聊
-//						for (GroupInfo aGroupInfo : groupInfoList)
-//							if (aGroupInfo.getGroupID().equals(groupUserName)) {
-//								groupInfo = aGroupInfo;
-//								break;
-//							}
-//						if (groupInfo != null) { // 如果已经获取了群聊列表
-//							memberList = modContact.getJSONArray("MemberList");
-//							memberListLen = memberList.size();
-//							for (j = 0; j < memberListLen; j++) {
-//								member = memberList.getJSONObject(j);
-//								memberUserName = member.getString("UserName");
-//								for (UserInfo userInfo : groupInfo.getGroup())
-//									if (userInfo.getUserId().equals(memberUserName)) {
-//										userInfo.setUin(member.getString("Uin"));
-//										break;
-//									}
-//							}
-//						}
-//					}
-//				}
-//			}
-
 			/*
 			 * 处理各类消息，包括文本、图片、表情等等
 			 */
@@ -526,16 +489,13 @@ public class Main {
 							if (!"".equals(groupID) && isListen) { // 来自群聊的消息
 								if(isLogin) {
 									try {
-										if (group.getHasMemberUin()) // 如果获取到了群成员的uin
-											 {
-//											 	System.out.println(group.getGroup().size());
-											 	System.out.println(group.getGroupNumberId()+","+
-														member.getUin());
+										if (group.getHasMemberUin()) // 如果获取到了群成员的
+										{
 											dbConnect.mergeActiveDegree(userName_robot, group.getGroupNumberId(),
 													member.getUin());
 											 }
 										else {
-											JOptionPane.showMessageDialog(null, "提示：该群未保存至通讯录！", "信息提示", JOptionPane.INFORMATION_MESSAGE);
+											JOptionPane.showMessageDialog(null, "提示：该群未获取uin！", "信息提示", JOptionPane.INFORMATION_MESSAGE);
 										}
 									} catch (Exception e) {
 										e.printStackTrace();
@@ -547,7 +507,7 @@ public class Main {
 								// 是否为签到
 								if (content.equals("签到")) {
 									if (!group.getHasMemberUin()) {
-										JOptionPane.showMessageDialog(null, "提示：该群未保存至通讯录！", "信息提示", JOptionPane.INFORMATION_MESSAGE);
+										JOptionPane.showMessageDialog(null, "提示：该群获取不到uin！", "信息提示", JOptionPane.INFORMATION_MESSAGE);
 									} else if (!isLogin) {
 										JOptionPane.showMessageDialog(null, "提示：您还未登陆，无法使用签到功能！", "信息提示", JOptionPane.INFORMATION_MESSAGE);
 									} else {
@@ -734,20 +694,6 @@ public class Main {
 							content = null;
 							break;
 						case 51: // 状态提醒消息
-							String[] statusNotifyUserNames = jsonObject1.getString("StatusNotifyUserName").split(","); // 获取所有群聊加密id
-							String[] groupIdSetList = jsonObject1.getString("Content").split(";")[6].split(","); // 获取所有群聊解密id
-							if (statusNotifyUserNames.length > 1) { // 如果需要提醒的用户多于1个，说明是群聊列表
-								content = null;
-								if (!hasNotified) {
-									int j, len = statusNotifyUserNames.length;
-									for (j = 0; j < len; j++)
-										if (statusNotifyUserNames[j].startsWith("@@")) {
-											groupIdNumberId.put(statusNotifyUserNames[j],groupIdSetList[j]);
-										}
-									getGroupList();
-								}
-								hasNotified = true;
-							} else // 否则说明不是群聊列表，而是打开了一个会话或者特殊账号发了信息
 								content = "[会话]";
 							break;
 						case 9999: // 系统提示信息
@@ -1065,8 +1011,6 @@ public class Main {
 				groupInfo.setHasMemberUin(false);
 				groupInfo.setAcrossGroupFlag(false);
 				groupInfo.setGroupID(contactList.getJSONObject(i).getString("UserName"));
-				groupInfo.setGroupNumberId(groupIdNumberId.get(groupInfo.getGroupID()));
-				groupIdName.put(groupIdNumberId.get(groupInfo.getGroupID()),contactList.getJSONObject(i).getString("NickName"));
 				groupInfo.setMemberCount(contactList.getJSONObject(i).getInt("MemberCount"));
 				groupName = contactList.getJSONObject(i).getString("NickName");
 				groupInfo.setGroupName(groupName.equals("") ? "群聊" : groupName);
@@ -1078,6 +1022,12 @@ public class Main {
 					groupInfo.getGroup().add(userInfo);
 				}
 				groupInfoList.add(groupInfo);
+			}
+		}
+		for(GroupInfo groupInfo:groupInfoList){
+			if(groupIdNumberId.get(groupInfo.getGroupID())!=null){
+				groupInfo.setGroupNumberId(groupIdNumberId.get(groupInfo.getGroupID()));
+				groupIdName.put(groupIdNumberId.get(groupInfo.getGroupID()),groupInfo.getGroupName());
 			}
 		}
 	}
@@ -1097,28 +1047,42 @@ public class Main {
 		syncKeyList = new StringBuffer();
 		syncKeyTransfer(s);
 		JSONObject replyJson = JSONObject.fromObject(s);
-		if(replyJson.getJSONArray("ModContactList").size()==0){
+		if(replyJson.getJSONArray("ModContactList").size()==0&&replyJson.getJSONArray("AddMsgList").size()!=0){
+			String[] statusNotifyUserNames = replyJson.getJSONArray("AddMsgList").getJSONObject(0).getString("StatusNotifyUserName").split(","); // 获取所有群聊加密id
+			String[] groupIdSetList = replyJson.getJSONArray("AddMsgList").getJSONObject(0).getString("Content").split(";")[6].split(","); // 获取所有群聊解密id
+			if (statusNotifyUserNames.length > 1) { // 如果需要提醒的用户多于1个，说明是群聊列表
+				content = null;
+				if (!hasNotified) {
+					int j, len = statusNotifyUserNames.length;
+					for (j = 0; j < len; j++)
+						if (statusNotifyUserNames[j].startsWith("@@")) {
+							groupIdNumberId.put(statusNotifyUserNames[j],groupIdSetList[j]);
+						}
+					getGroupList();
+				}
+				hasNotified = true;
+			}
 			return false;
 		}
 		else {
 			for (int i = 0; i < replyJson.getJSONArray("ModContactList").size(); i++) {
 				GroupInfo groupInfo = new GroupInfo();
 				JSONArray uinArray = replyJson.getJSONArray("ModContactList").getJSONObject(i).getJSONArray("MemberList");
-				groupInfo.setGroupName(replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("NickName"));
+				groupInfo.setGroupName(replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("NickName").equals("")?"群聊":replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("NickName"));
 				groupInfo.setHasMemberUin(true);
 				groupInfo.setAcrossGroupFlag(false);
 				groupInfo.setGroupID(replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("UserName"));
-				groupInfo.setGroupNumberId(groupIdNumberId.get(groupInfo.getGroupID()));
-				groupIdName.put(groupIdNumberId.get(groupInfo.getGroupID()),replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("NickName"));
 				getGroupUinId.add(replyJson.getJSONArray("ModContactList").getJSONObject(i).getString("UserName"));
 				for (int k = 0; k < uinArray.size(); k++) {
 					UserInfo userInfo = new UserInfo();
 					userInfo.setUin(uinArray.getJSONObject(k).getString("Uin"));
 					userInfo.setUserId(uinArray.getJSONObject(k).getString("UserName"));
 					userInfo.setRemarkName(uinArray.getJSONObject(k).getString("DisplayName").equals("") ? uinArray.getJSONObject(k).getString("NickName") : uinArray.getJSONObject(k).getString("DisplayName"));
+					memberIdName.put(userInfo.getUin(),userInfo.getRemarkName());
 					groupInfo.getGroup().add(userInfo);
 				}
 				groupInfoList.add(groupInfo);
+				System.out.println(groupInfo.getGroupName());
 			}
 			return true;
 		}

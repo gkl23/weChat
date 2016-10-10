@@ -121,7 +121,7 @@ public class DBConnect {
 					}
 					else {
 						sql = "insert into " + userName + "_info" + "(groupName,memberName,signDate,is_sign) VALUES ('"
-								+ groupNumberId + "','" + memberUin + "','" + sdf.format(new Date()) + "',1)";
+								+ groupNumberId + "','" + memberUin + "','" + df.format(new Date()) + "',1)";
 						connection.createStatement().execute(sql);
 						sql = "select count(signDate) as signCount from " + userName + "_info where groupName='"
 								+ groupNumberId + "' and memberName='" + memberUin
@@ -135,14 +135,24 @@ public class DBConnect {
 						return count;
 					}
 				}
-				else
+				else {
+					sql = "insert into " + userName + "_info" + "(groupName,memberName,signDate,is_sign) VALUES ('"
+							+ groupNumberId + "','" + memberUin + "','" + df.format(new Date()) + "',1)";
+					connection.createStatement().execute(sql);
 					return 1;
+				}
 			}
 			else
 			{
+				sql = "insert into " + userName + "_info" + "(groupName,memberName,signDate,is_sign) VALUES ('"
+						+ groupNumberId + "','" + memberUin + "','" + df.format(new Date()) + "',1)";
+				connection.createStatement().execute(sql);
 				return 1;
 			}
 		} else { // 如果该用户第一次使用签到功能
+			sql = "insert into " + userName + "_info" + "(groupName,memberName,signDate,is_sign) VALUES ('"
+					+ groupNumberId + "','" + memberUin + "','" + df.format(new Date()) + "',1)";
+			connection.createStatement().execute(sql);
 			return 1;
 		}
 	}
@@ -168,10 +178,10 @@ public class DBConnect {
 					+ groupNumberId + "','" + memberUin + "','" + sdf.format(new Date()) + "',1)";
 			statement.execute(sql);
 		} else {
-			String recordDate = rs.getString("signDate"); // 最近一条记录的时间
+			String recordDate = rs.getString("signDate").split(" ")[0]; // 最近一条记录的时间
 			if (recordDate.equals(sdf.format(new Date()))) // 如果是当天的活跃度
 				sql = "Update " + userName + "_info set activeDegree=activeDegree+1 where groupName='" + groupNumberId
-						+ "' and memberName='" + memberUin + "' and signDate='" + recordDate + "'";
+						+ "' and memberName='" + memberUin + "' and signDate='" + rs.getString("signDate") + "'";
 			else
 				sql = "Insert " + userName + "_info" + "(groupName,memberName,signDate,activeDegree) values('"
 						+ groupNumberId + "','" + memberUin + "','" + sdf.format(new Date()) + "',1)";
@@ -206,7 +216,7 @@ public class DBConnect {
 				+ "','" + df.format(new Date()) + "','1')";
 		statement.execute(sql);
 		sql = "CREATE TABLE " + userName + "_info"
-				+ "(groupName VARCHAR(127) NOT NULL,memberName VARCHAR(127) NOT NULL,signDate date,is_sign INT DEFAULT 0,warn INT DEFAULT 0, activeDegree INT DEFAULT 0, PRIMARY KEY(groupName,memberName,signDate))";
+				+ "(groupName VARCHAR(127) NOT NULL,memberName VARCHAR(127) NOT NULL,signDate TIMESTAMP ,is_sign INT DEFAULT 0,warn INT DEFAULT 0, activeDegree INT DEFAULT 0, PRIMARY KEY(groupName,memberName,signDate))";
 		statement.executeUpdate(sql);
 	}
 
