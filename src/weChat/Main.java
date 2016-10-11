@@ -247,9 +247,9 @@ public class Main {
 	 */
 	public void readFiles() throws Exception {
 		String s[] = null;
-		File public_file = new File("公开.txt");
-		File private_file = new File("私密.txt");
-		File sense_file = new File("敏感词.txt");
+		File public_file = new File(userName_wx+"_公开.txt");
+		File private_file = new File(userName_wx+"_私密.txt");
+		File sense_file = new File(userName_wx+"_敏感词.txt");
 		BufferedWriter bw = null;
 		Boolean flag1 = false, flag2 = false, flag3 = false;
 		if (!public_file.exists()) {

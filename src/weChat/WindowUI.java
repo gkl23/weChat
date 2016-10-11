@@ -310,8 +310,9 @@ public class WindowUI {
 
 			chooseGroup.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 100,
 					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
+			chooseGroup.setSize(300,300);
 			chooseGroup.setVisible(false);
-			chooseGroup.setResizable(false);
+			chooseGroup.setResizable(true);
 			chooseGroup.setDefaultCloseOperation(chooseGroup.HIDE_ON_CLOSE);
 
 			groupInvite.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 400,
@@ -658,6 +659,7 @@ public class WindowUI {
 			wordPanel.add(privatePanel);
 			wordPanel.add(sensePanel);
 
+			showGroupPanel.setSize(300,300);
 			showGroupPanel.setLayout(new BoxLayout(showGroupPanel, BoxLayout.Y_AXIS));
 			groupJScrollPane = new JScrollPane(showGroupPanel);
 			groupJScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
