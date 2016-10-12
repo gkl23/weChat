@@ -1659,9 +1659,13 @@ public class Main {
 						JButton jButton = new JButton("修改群名");
 						jButton.setForeground(Color.white);
 						jButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
-						windowUI.getSetGroupNamePanel().add(jLabel);
-						windowUI.getSetGroupNamePanel().add(jTextArea);
-						windowUI.getSetGroupNamePanel().add(jButton);
+						JPanel setGroupNameSinglePanel = new JPanel();
+						setGroupNameSinglePanel.setBorder(BorderFactory.createEmptyBorder(20,10,20,10));
+						setGroupNameSinglePanel.setLayout(new GridLayout(0, 3, 20, 20));
+						setGroupNameSinglePanel.add(jLabel);
+						setGroupNameSinglePanel.add(jTextArea);
+						setGroupNameSinglePanel.add(jButton);
+						windowUI.getSetGroupNamePanel().add(setGroupNameSinglePanel);
 						jButton.addActionListener(new ActionListener() {
 							@Override
 							public void actionPerformed(ActionEvent e) {

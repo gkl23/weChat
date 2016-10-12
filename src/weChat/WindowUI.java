@@ -86,6 +86,7 @@ public class WindowUI {
 	private static JPanel setPeriodPanel = new JPanel();// 周期发布面板
 	private static JTabbedPane setPanel = new JTabbedPane(JTabbedPane.LEFT);
 	private static JPanel emptyPanel = new JPanel();
+	private static JPanel emptyGroupPanel = new JPanel();
 	private static JPanel setGroupNamePanel = new JPanel();
 	private static JPanel setTuLingAPIPanel = new JPanel();
 	private static JPanel setWarnCount = new JPanel();
@@ -220,7 +221,6 @@ public class WindowUI {
 			dailyTip.setVisible(false);
 			dailyTip.setResizable(false);
 			dailyTip.setDefaultCloseOperation(dailyTip.HIDE_ON_CLOSE);
-			// dailyTip.setLayout(new GridBagLayout());
 			dailyTip.setSize(600, 800);
 			emptyTipPanel.setSize(600, 800);
 			dailyTip.getContentPane().add(emptyTipPanel);
@@ -308,12 +308,16 @@ public class WindowUI {
 			setAcrossGroupJPanel.add(acrossGroupListJPanel, acrossGB);
 			setPanel.add("跨群功能设置", setAcrossGroupJPanel);
 
-			chooseGroup.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 100,
-					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
-			chooseGroup.setSize(300,300);
+			chooseGroup.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 150,
+					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 250);
 			chooseGroup.setVisible(false);
-			chooseGroup.setResizable(true);
+			chooseGroup.setResizable(false);
 			chooseGroup.setDefaultCloseOperation(chooseGroup.HIDE_ON_CLOSE);
+			chooseGroup.setSize(300,500);
+			chooseGroup.getContentPane().add(emptyGroupPanel);
+			emptyGroupPanel.setLayout(new BorderLayout());
+			emptyGroupPanel.setPreferredSize(new Dimension(300,500));
+
 
 			groupInvite.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 400,
 					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
@@ -659,13 +663,13 @@ public class WindowUI {
 			wordPanel.add(privatePanel);
 			wordPanel.add(sensePanel);
 
-			showGroupPanel.setSize(300,300);
-			showGroupPanel.setLayout(new BoxLayout(showGroupPanel, BoxLayout.Y_AXIS));
+
+			showGroupPanel.setLayout(new BoxLayout(showGroupPanel,BoxLayout.Y_AXIS));
 			groupJScrollPane = new JScrollPane(showGroupPanel);
 			groupJScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			groupJScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 			groupJScrollPane.setUI(new BEScrollPaneUI());
-			chooseGroup.add(groupJScrollPane);
+			emptyGroupPanel.add(BorderLayout.CENTER,groupJScrollPane);
 
 			invitePanel.setLayout(new GridBagLayout());
 			invite.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
@@ -693,7 +697,7 @@ public class WindowUI {
 			searchRemoveGroup.setUI(new BETextFieldUI());
 			jList4 = new JList();
 
-			setGroupNamePanel.setLayout(new GridLayout(0, 3, 20, 20));
+			setGroupNamePanel.setLayout(new BoxLayout(setGroupNamePanel,BoxLayout.Y_AXIS));
 			setTuLingAPIPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
 			setWarnCount.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
 			warnCount.setFont(new Font("黑体", 1, 16));
@@ -1416,14 +1420,6 @@ public class WindowUI {
 		WindowUI.setPanel = setPanel;
 	}
 
-	public static JPanel getSetGroupNamePanel() {
-		return setGroupNamePanel;
-	}
-
-	public static void setSetGroupNamePanel(JPanel setGroupNamePanel) {
-		WindowUI.setGroupNamePanel = setGroupNamePanel;
-	}
-
 	public static JPanel getSetTuLingAPIPanel() {
 		return setTuLingAPIPanel;
 	}
@@ -1838,5 +1834,13 @@ public class WindowUI {
 
 	public static void setCheckActiveDegree(JButton checkActiveDegree) {
 		WindowUI.checkActiveDegree = checkActiveDegree;
+	}
+
+	public static JPanel getSetGroupNamePanel() {
+		return setGroupNamePanel;
+	}
+
+	public static void setSetGroupNamePanel(JPanel setGroupNamePanel) {
+		WindowUI.setGroupNamePanel = setGroupNamePanel;
 	}
 }

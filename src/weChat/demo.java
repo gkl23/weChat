@@ -1,14 +1,8 @@
 package weChat;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 
 import Models.GroupInfo;
-import Utils.DBConnect;
 import org.jb2011.lnf.beautyeye.ch3_button.BEButtonUI;
 import org.jb2011.lnf.beautyeye.ch4_scroll.BEScrollPaneUI;
 
@@ -42,8 +36,6 @@ public class demo {
 			JButton jButton = new JButton("修改群名");
 			jButton.setForeground(Color.white);
 			jButton.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
-			windowUI.getSetGroupNamePanel().add(jLabel);
-			windowUI.getSetGroupNamePanel().add(jTextArea);
-			windowUI.getSetGroupNamePanel().add(jButton);
+
 	}
 }
