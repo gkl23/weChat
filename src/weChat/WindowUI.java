@@ -1,6 +1,7 @@
 package weChat;
 
 import Models.TipRecord;
+import net.sf.json.JSONObject;
 import weChat.CustomJTextFieldDocument.Type;
 
 import org.jb2011.lnf.beautyeye.BeautyEyeLNFHelper;
@@ -38,12 +39,14 @@ public class WindowUI {
 	private static JFrame groupRemove = null;
 	private static JFrame setFrame = null;
 	private static JFrame loginFrame = null;
-	private static JFrame signFrame = null;
+	private static JFrame remarkNameFrame = null;
 	private static JButton chatJButton = new JButton(new ImageIcon(WindowUI.class.getResource("resource/chat.png")));
 	private static JButton addFriend = new JButton(
 			new ImageIcon(WindowUI.class.getResource("resource/add_friend.png")));
 	private static JButton signRecord = new JButton(
 			new ImageIcon(WindowUI.class.getResource("resource/sign_record.png")));
+    private static JButton activeDegreeRecord = new JButton(
+            new ImageIcon(WindowUI.class.getResource("resource/sign_record.png")));
 	private static JButton atModeBtn = new JButton(new ImageIcon(WindowUI.class.getResource("resource/auto_chat.png")));
 	private static JButton reply = new JButton(new ImageIcon(WindowUI.class.getResource("resource/reply.png")));
 	private static JButton warn = new JButton(new ImageIcon(WindowUI.class.getResource("resource/warn.png")));
@@ -63,6 +66,7 @@ public class WindowUI {
 			new ImageIcon(WindowUI.class.getResource("resource/send_by_time.png")));
 	private static JButton senseWord = new JButton(
 			new ImageIcon(WindowUI.class.getResource("resource/send_by_time.png")));
+	private static JButton modifyRemarkName = new JButton(new ImageIcon(WindowUI.class.getResource("resource/set.png")));
 	private static JPanel userInfoJPanel = new JPanel();
 	private static JPanel userButtonJPanel = new JPanel();
 	private static JPanel userNameJPanel = new JPanel();
@@ -86,10 +90,13 @@ public class WindowUI {
 	private static JPanel setPeriodPanel = new JPanel();// 周期发布面板
 	private static JTabbedPane setPanel = new JTabbedPane(JTabbedPane.LEFT);
 	private static JPanel emptyPanel = new JPanel();
-	private static JPanel emptyGroupPanel = new JPanel();
 	private static JPanel setGroupNamePanel = new JPanel();
 	private static JPanel setTuLingAPIPanel = new JPanel();
 	private static JPanel setWarnCount = new JPanel();
+	private static JPanel setOnlineTimePanel = new JPanel();
+	private static JPanel setHourAndMinutePanel = new JPanel();
+	private static JPanel remarkNamePanel = new JPanel();
+	private static JPanel setRemarkNamePanel = new JPanel();
 	private static JScrollPane jScrollPane;
 	private static JScrollPane groupJScrollPane;
 	private static JScrollPane tipTimeJScrollPane;
@@ -101,8 +108,11 @@ public class WindowUI {
 	private static JScrollPane inviteScrollPane2;
 	private static JScrollPane removeScrollPane1;
 	private static JScrollPane removeScrollPane2;
+	private static JScrollPane modifyScrollPane1;
+	private static JScrollPane modifyScrollPane2;
 	private static JLabel tuLing = new JLabel("   图灵机器人 key  ");// 存放图灵key
 	private static JLabel warnCount = new JLabel("敏感警告次数设置:  ");
+	private static JLabel setOnlineTime = new JLabel("上下线时间设置: ");
 	private static JLabel userNameLabel = new JLabel();// 存放用户名字
 	private static JLabel userHeaderImg = new JLabel();// 存放用户头像
 	private static JLabel robotUserName = new JLabel("用户名：");
@@ -120,14 +130,17 @@ public class WindowUI {
 	private static JPanel jPanel_10 = new JPanel();// 存放显示群列表的功能的按钮
 	private static JPanel jPanel_11 = new JPanel();// 存放邀请进群
 	private static JPanel jPanel_12 = new JPanel();// 存放T人出群
+    private static JPanel jPanel_13 = new JPanel();// 查看活跃度统计
+	private static JPanel jPanel_14 = new JPanel();// 修改备注名
 	private static JPanel publicPanel = new JPanel();
 	private static JPanel privatePanel = new JPanel();
 	private static JPanel sensePanel = new JPanel();
-	private static JPanel signPanel = new JPanel();
 	private static JList jList1 = null;
 	private static JList jList2 = null;
 	private static JList jList3 = null;
 	private static JList jList4 = null;
+	private static JList jList5 = null;
+	private static JList jList6 = null;
 	private static JTextPane jTextPane = new JTextPane();
 	private static JTextField timeArea = new JTextField(10);// 定时发送的时间
 	private static JTextField periodStartTime = new JTextField(10);// 间隔发布的开始时间
@@ -143,6 +156,11 @@ public class WindowUI {
 	private static JTextField searchRemoveGroup = new JTextField(20);// 搜索群组的搜索输入框
 	private static JTextField minWarnCount = new JTextField(10);// 最小警告次数
 	private static JTextField maxWarnCount = new JTextField(10);// 最大警告次数
+	private static JTextField remarkName = new JTextField(20);//修改的备注名
+	private static JComboBox<Integer> onlineTimeHour = new JComboBox<>();//上线时间小时
+	private static JComboBox<Integer> onlineTimeMinute = new JComboBox<>();//上线时间分钟
+	private static JComboBox<Integer> offlineTimeHour = new JComboBox<>();//下线时间小时
+	private static JComboBox<Integer> offlineTimeMinute = new JComboBox<>();//下线时间分钟
 	private static JComboBox groupNameArea = new JComboBox();// 定时发送中选择群名的选择框
 	private static JComboBox groupNamePeriodArea = new JComboBox();// 间隔发布中选择群名
 	private static JButton addTipTimeButton = new JButton("添加");
@@ -157,8 +175,8 @@ public class WindowUI {
 	private static JButton register = new JButton("注册");
 	private static JButton modifyTulingKey = new JButton("修改");
 	private static JButton modifyWarnCount = new JButton("修改");
-	private static JButton checkSignRecord = new JButton("查看记录");
-	private static JButton checkActiveDegree = new JButton("活跃度统计");
+	private static JButton modifyOnlineTime = new JButton("修改");
+	private static JButton modifyName = new JButton("修改备注");
 	private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
 	private static GridBagConstraints gb = new GridBagConstraints();
 	private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
@@ -175,7 +193,7 @@ public class WindowUI {
 			BeautyEyeLNFHelper.frameBorderStyle = BeautyEyeLNFHelper.FrameBorderStyle.translucencyAppleLike;
 			BeautyEyeLNFHelper.launchBeautyEyeLNF();
 			UIManager.put("RootPane.setupButtonVisible", false);
-			mainFrame = new JFrame("微信机器人");
+			mainFrame = new JFrame();
 			chatIn = new JFrame("微信机器人--消息接收");
 			dailyTip = new JFrame("微信机器人--定时消息提醒");
 			wordModify = new JFrame("微信机器人--修改词库");
@@ -184,7 +202,7 @@ public class WindowUI {
 			groupRemove = new JFrame("微信机器人--踢人出群");
 			setFrame = new JFrame("微信机器人--设置");
 			loginFrame = new JFrame("微信机器人--登录");
-			signFrame = new JFrame("微信机器人--签到管理");
+			remarkNameFrame = new JFrame("微信机器人--修改备注");
 
 			mainFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 240,
 					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 400);
@@ -208,19 +226,12 @@ public class WindowUI {
 			gb.gridy = GridBagConstraints.RELATIVE;
 			chatIn.setSize(600, 600);
 
-			signFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 250,
-					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 100);
-			signFrame.setVisible(false);
-			signFrame.setResizable(false);
-			signFrame.setDefaultCloseOperation(signFrame.HIDE_ON_CLOSE);
-			signFrame.setSize(500, 200);
-			signFrame.add(signPanel);
-
 			dailyTip.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 500,
 					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
 			dailyTip.setVisible(false);
 			dailyTip.setResizable(false);
 			dailyTip.setDefaultCloseOperation(dailyTip.HIDE_ON_CLOSE);
+			// dailyTip.setLayout(new GridBagLayout());
 			dailyTip.setSize(600, 800);
 			emptyTipPanel.setSize(600, 800);
 			dailyTip.getContentPane().add(emptyTipPanel);
@@ -308,16 +319,12 @@ public class WindowUI {
 			setAcrossGroupJPanel.add(acrossGroupListJPanel, acrossGB);
 			setPanel.add("跨群功能设置", setAcrossGroupJPanel);
 
-			chooseGroup.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 150,
-					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 250);
+			chooseGroup.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 250,
+					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 350);
 			chooseGroup.setVisible(false);
 			chooseGroup.setResizable(false);
+			chooseGroup.setPreferredSize(new Dimension(500, 700));
 			chooseGroup.setDefaultCloseOperation(chooseGroup.HIDE_ON_CLOSE);
-			chooseGroup.setSize(300,500);
-			chooseGroup.getContentPane().add(emptyGroupPanel);
-			emptyGroupPanel.setLayout(new BorderLayout());
-			emptyGroupPanel.setPreferredSize(new Dimension(300,500));
-
 
 			groupInvite.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 400,
 					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
@@ -338,6 +345,16 @@ public class WindowUI {
 			groupRemove.setSize(800, 700);
 			groupRemove.add(BorderLayout.CENTER, removePanel);
 			groupRemove.add(BorderLayout.SOUTH, remove);
+
+			remarkNameFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 400,
+					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 300);
+			remarkNameFrame.setVisible(false);
+			remarkNameFrame.setResizable(false);
+			remarkNameFrame.setLayout(new BorderLayout());
+			remarkNameFrame.setDefaultCloseOperation(remarkNameFrame.HIDE_ON_CLOSE);
+			remarkNameFrame.setSize(800,700);
+			remarkNameFrame.add(BorderLayout.CENTER,setRemarkNamePanel);
+			remarkNameFrame.add(BorderLayout.SOUTH,remarkNamePanel);
 
 			setFrame.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2 - 450,
 					Toolkit.getDefaultToolkit().getScreenSize().height / 2 - 360);
@@ -401,6 +418,12 @@ public class WindowUI {
 			inviteIntoGroup.setFocusPainted(false);
 			removeFromGroup.setBorder(null);
 			removeFromGroup.setFocusPainted(false);
+            activeDegreeRecord.setBorder(null);
+            activeDegreeRecord.setFocusPainted(false);
+			modifyOnlineTime.setBorder(null);
+			modifyOnlineTime.setFocusPainted(false);
+			modifyRemarkName.setBorder(null);
+			modifyRemarkName.setFocusPainted(false);
 			// 主界面的组件设置
 			jPanel.setLayout(new GridLayout());
 			jPanel_1.setLayout(new GridLayout(2, 1));
@@ -474,6 +497,18 @@ public class WindowUI {
 			JLabel j12 = new JLabel("踢人出群");
 			j12.setFont(new Font("黑体", 1, 16));
 			jPanel_12.add(j12);
+            jPanel_13.setBorder(null);
+            jPanel_13.setLayout(new GridLayout(2,1));
+            jPanel_13.add(activeDegreeRecord);
+            JLabel j13 = new JLabel("活跃统计");
+            j13.setFont(new Font("黑体", 1, 16));
+            jPanel_13.add(j13);
+			jPanel_14.setBorder(null);
+			jPanel_14.setLayout(new GridLayout(2,1));
+			jPanel_14.add(modifyRemarkName);
+			JLabel j14 = new JLabel("修改备注");
+			j14.setFont(new Font("黑体", 1, 16));
+			jPanel_14.add(j14);
 
 			// 消息盒子的组件设置
 			saveRecord.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.red));
@@ -635,14 +670,6 @@ public class WindowUI {
 			setTipPanel.add("定时发布", setTimePanel);
 			setTipPanel.add("间隔发布", setPeriodPanel);
 
-			signPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 30));
-			checkSignRecord.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.blue));
-			checkSignRecord.setForeground(Color.white);
-			checkActiveDegree.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.lightBlue));
-			checkActiveDegree.setForeground(Color.white);
-			signPanel.add(checkSignRecord);
-			signPanel.add(checkActiveDegree);
-
 			wordPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 30));
 			publicPanel.setLayout(new GridLayout(2, 1));
 			JLabel publicLabel = new JLabel("公开词库");
@@ -663,13 +690,12 @@ public class WindowUI {
 			wordPanel.add(privatePanel);
 			wordPanel.add(sensePanel);
 
-
-			showGroupPanel.setLayout(new BoxLayout(showGroupPanel,BoxLayout.Y_AXIS));
+			showGroupPanel.setLayout(new BoxLayout(showGroupPanel, BoxLayout.Y_AXIS));
 			groupJScrollPane = new JScrollPane(showGroupPanel);
 			groupJScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 			groupJScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 			groupJScrollPane.setUI(new BEScrollPaneUI());
-			emptyGroupPanel.add(BorderLayout.CENTER,groupJScrollPane);
+			chooseGroup.add(groupJScrollPane);
 
 			invitePanel.setLayout(new GridBagLayout());
 			invite.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
@@ -697,24 +723,70 @@ public class WindowUI {
 			searchRemoveGroup.setUI(new BETextFieldUI());
 			jList4 = new JList();
 
-			setGroupNamePanel.setLayout(new BoxLayout(setGroupNamePanel,BoxLayout.Y_AXIS));
+			setRemarkNamePanel.setLayout(new GridBagLayout());
+			jList5 = new JList();
+			jList6 = new JList();
+			remarkNamePanel.setLayout(new FlowLayout(FlowLayout.CENTER,10,10));
+			remarkName.setUI(new BETextFieldUI());
+			modifyName.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
+			remarkNamePanel.add(remarkName);
+			remarkNamePanel.add(modifyName);
+
+			setGroupNamePanel.setLayout(new GridBagLayout());
 			setTuLingAPIPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
 			setWarnCount.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
+			setOnlineTimePanel.setLayout(new FlowLayout(FlowLayout.CENTER,30,20));
+			setHourAndMinutePanel.setLayout(new GridLayout(2,2,10,10));
+            setOnlineTime.setFont(new Font("黑体", 1, 16));
 			warnCount.setFont(new Font("黑体", 1, 16));
 			minWarnCount.setUI(new BETextFieldUI());
 			maxWarnCount.setUI(new BETextFieldUI());
+			onlineTimeHour.setUI(new BEComboBoxUI());
+			onlineTimeMinute.setUI(new BEComboBoxUI());
+			offlineTimeHour.setUI(new BEComboBoxUI());
+			offlineTimeMinute.setUI(new BEComboBoxUI());
+			for(int i = 0;i<24;i++) {
+				onlineTimeHour.addItem(i);
+				offlineTimeHour.addItem(i);
+			}
+			for(int j = 0;j<60;j++){
+				onlineTimeMinute.addItem(j);
+				offlineTimeMinute.addItem(j);
+			}
 			minWarnCount.setDocument(new CustomJTextFieldDocument(10, Type.NUMBER));
 			maxWarnCount.setDocument(new CustomJTextFieldDocument(10, Type.NUMBER));
 			minWarnCount.setBorder(BorderFactory.createTitledBorder("最小值"));
 			maxWarnCount.setBorder(BorderFactory.createTitledBorder("最大值"));
+			onlineTimeHour.setBorder(BorderFactory.createTitledBorder("上线时间(小时)"));
+			onlineTimeMinute.setBorder(BorderFactory.createTitledBorder("上线时间(分钟)"));
+			offlineTimeHour.setBorder(BorderFactory.createTitledBorder("下线时间(小时)"));
+			offlineTimeMinute.setBorder(BorderFactory.createTitledBorder("下线时间(分钟)"));
+			onlineTimeHour.setPreferredSize(new Dimension(160,50));
+			onlineTimeMinute.setPreferredSize(new Dimension(160,50));
+			offlineTimeHour.setPreferredSize(new Dimension(160,50));
+			offlineTimeMinute.setPreferredSize(new Dimension(160,50));
+			onlineTimeHour.setSelectedItem(8);
+			onlineTimeMinute.setSelectedItem(0);
+			offlineTimeHour.setSelectedItem(20);
+			offlineTimeMinute.setSelectedItem(0);
 			setWarnCount.add(warnCount);
 			setWarnCount.add(minWarnCount);
 			setWarnCount.add(maxWarnCount);
+			setOnlineTimePanel.add(setOnlineTime);
+			setHourAndMinutePanel.add(onlineTimeHour);
+			setHourAndMinutePanel.add(onlineTimeMinute);
+			setHourAndMinutePanel.add(offlineTimeHour);
+			setHourAndMinutePanel.add(offlineTimeMinute);
+			setOnlineTimePanel.add(setHourAndMinutePanel);
 			modifyWarnCount.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.blue));
 			setWarnCount.add(modifyWarnCount);
 			modifyTulingKey.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
 			modifyTulingKey.setForeground(Color.white);
+			modifyOnlineTime.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.lightBlue));
+			setOnlineTimePanel.add(modifyOnlineTime);
+			modifyOnlineTime.setForeground(Color.white);
 			setGroupNameJScrollPane = new JScrollPane(setGroupNamePanel);
+			setGroupNameJScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 			tuLing.setFont(new Font("黑体", 1, 16));
 			tulingKeyArea.setBorder(BorderFactory.createTitledBorder("由小写英文字母与0到9的数字共32位组成"));
 			tulingKeyArea.setSize(350, 100);
@@ -726,6 +798,7 @@ public class WindowUI {
 			setPanel.add("修改群名", setGroupNameJScrollPane);
 			setPanel.add("修改图灵key", setTuLingAPIPanel);
 			setPanel.add("敏感词警告次数范围", setWarnCount);
+			setPanel.add("设置上下线时间",setOnlineTimePanel);
 
 			log.setSize(100, 100);
 			log.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
@@ -836,6 +909,46 @@ public class WindowUI {
 		tipPeriodPanel.updateUI();
 	}
 
+	public static JComboBox<Integer> getOnlineTimeHour() {
+		return onlineTimeHour;
+	}
+
+	public static void setOnlineTimeHour(JComboBox<Integer> onlineTimeHour) {
+		WindowUI.onlineTimeHour = onlineTimeHour;
+	}
+
+	public static JComboBox<Integer> getOnlineTimeMinute() {
+		return onlineTimeMinute;
+	}
+
+	public static void setOnlineTimeMinute(JComboBox<Integer> onlineTimeMinute) {
+		WindowUI.onlineTimeMinute = onlineTimeMinute;
+	}
+
+	public static JComboBox<Integer> getOfflineTimeHour() {
+		return offlineTimeHour;
+	}
+
+	public static void setOfflineTimeHour(JComboBox<Integer> offlineTimeHour) {
+		WindowUI.offlineTimeHour = offlineTimeHour;
+	}
+
+	public static JComboBox<Integer> getOfflineTimeMinute() {
+		return offlineTimeMinute;
+	}
+
+	public static void setOfflineTimeMinute(JComboBox<Integer> offlineTimeMinute) {
+		WindowUI.offlineTimeMinute = offlineTimeMinute;
+	}
+
+	public static JButton getModifyOnlineTime() {
+		return modifyOnlineTime;
+	}
+
+	public static void setModifyOnlineTime(JButton modifyOnlineTime) {
+		WindowUI.modifyOnlineTime = modifyOnlineTime;
+	}
+
 	public static SimpleAttributeSet getAttributeSet() {
 		return attributeSet;
 	}
@@ -862,6 +975,70 @@ public class WindowUI {
 
 	public static JButton getChatJButton() {
 		return chatJButton;
+	}
+
+	public static JFrame getRemarkNameFrame() {
+		return remarkNameFrame;
+	}
+
+	public static void setRemarkNameFrame(JFrame remarkNameFrame) {
+		WindowUI.remarkNameFrame = remarkNameFrame;
+	}
+
+	public static JButton getModifyRemarkName() {
+		return modifyRemarkName;
+	}
+
+	public static void setModifyRemarkName(JButton modifyRemarkName) {
+		WindowUI.modifyRemarkName = modifyRemarkName;
+	}
+
+	public static JPanel getRemarkNamePanel() {
+		return remarkNamePanel;
+	}
+
+	public static void setRemarkNamePanel(JPanel remarkNamePanel) {
+		WindowUI.remarkNamePanel = remarkNamePanel;
+	}
+
+	public static JPanel getSetRemarkNamePanel() {
+		return setRemarkNamePanel;
+	}
+
+	public static void setSetRemarkNamePanel(JPanel setRemarkNamePanel) {
+		WindowUI.setRemarkNamePanel = setRemarkNamePanel;
+	}
+
+	public static JList getjList5() {
+		return jList5;
+	}
+
+	public static void setjList5(JList jList5) {
+		WindowUI.jList5 = jList5;
+	}
+
+	public static JList getjList6() {
+		return jList6;
+	}
+
+	public static void setjList6(JList jList6) {
+		WindowUI.jList6 = jList6;
+	}
+
+	public static JTextField getRemarkName() {
+		return remarkName;
+	}
+
+	public static void setRemarkName(JTextField remarkName) {
+		WindowUI.remarkName = remarkName;
+	}
+
+	public static JButton getModifyName() {
+		return modifyName;
+	}
+
+	public static void setModifyName(JButton modifyName) {
+		WindowUI.modifyName = modifyName;
 	}
 
 	public static void setChatJButton(JButton chatJButton) {
@@ -1420,6 +1597,14 @@ public class WindowUI {
 		WindowUI.setPanel = setPanel;
 	}
 
+	public static JPanel getSetGroupNamePanel() {
+		return setGroupNamePanel;
+	}
+
+	public static void setSetGroupNamePanel(JPanel setGroupNamePanel) {
+		WindowUI.setGroupNamePanel = setGroupNamePanel;
+	}
+
 	public static JPanel getSetTuLingAPIPanel() {
 		return setTuLingAPIPanel;
 	}
@@ -1764,14 +1949,6 @@ public class WindowUI {
 		WindowUI.userNameJPanel = userNameJPanel;
 	}
 
-	public static JFrame getSignFrame() {
-		return signFrame;
-	}
-
-	public static void setSignFrame(JFrame signFrame) {
-		WindowUI.signFrame = signFrame;
-	}
-
 	public static JPanel getSetWarnCount() {
 		return setWarnCount;
 	}
@@ -1786,14 +1963,6 @@ public class WindowUI {
 
 	public static void setWarnCount(JLabel warnCount) {
 		WindowUI.warnCount = warnCount;
-	}
-
-	public static JPanel getSignPanel() {
-		return signPanel;
-	}
-
-	public static void setSignPanel(JPanel signPanel) {
-		WindowUI.signPanel = signPanel;
 	}
 
 	public static JTextField getMinWarnCount() {
@@ -1812,6 +1981,14 @@ public class WindowUI {
 		WindowUI.maxWarnCount = maxWarnCount;
 	}
 
+	public static JPanel getjPanel_14() {
+		return jPanel_14;
+	}
+
+	public static void setjPanel_14(JPanel jPanel_14) {
+		WindowUI.jPanel_14 = jPanel_14;
+	}
+
 	public static JButton getModifyWarnCount() {
 		return modifyWarnCount;
 	}
@@ -1820,27 +1997,36 @@ public class WindowUI {
 		WindowUI.modifyWarnCount = modifyWarnCount;
 	}
 
-	public static JButton getCheckSignRecord() {
-		return checkSignRecord;
+
+    public static JButton getActiveDegreeRecord() {
+        return activeDegreeRecord;
+    }
+
+    public static void setActiveDegreeRecord(JButton activeDegreeRecord) {
+        WindowUI.activeDegreeRecord = activeDegreeRecord;
+    }
+
+    public static JPanel getjPanel_13() {
+        return jPanel_13;
+    }
+
+	public static JScrollPane getModifyScrollPane1() {
+		return modifyScrollPane1;
 	}
 
-	public static void setCheckSignRecord(JButton checkSignRecord) {
-		WindowUI.checkSignRecord = checkSignRecord;
+	public static void setModifyScrollPane1(JScrollPane modifyScrollPane1) {
+		WindowUI.modifyScrollPane1 = modifyScrollPane1;
 	}
 
-	public static JButton getCheckActiveDegree() {
-		return checkActiveDegree;
+	public static JScrollPane getModifyScrollPane2() {
+		return modifyScrollPane2;
 	}
 
-	public static void setCheckActiveDegree(JButton checkActiveDegree) {
-		WindowUI.checkActiveDegree = checkActiveDegree;
+	public static void setModifyScrollPane2(JScrollPane modifyScrollPane2) {
+		WindowUI.modifyScrollPane2 = modifyScrollPane2;
 	}
 
-	public static JPanel getSetGroupNamePanel() {
-		return setGroupNamePanel;
-	}
-
-	public static void setSetGroupNamePanel(JPanel setGroupNamePanel) {
-		WindowUI.setGroupNamePanel = setGroupNamePanel;
-	}
+	public static void setjPanel_13(JPanel jPanel_13) {
+        WindowUI.jPanel_13 = jPanel_13;
+    }
 }

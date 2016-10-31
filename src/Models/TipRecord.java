@@ -8,19 +8,32 @@ public class TipRecord {
 	private int period;// 间隔时间
 	private String groupName;
 	private String property;
-
-	public TipRecord() {
-		time = "";
-		groupName = "";
-		property = "";
-		period = 0;
-	}
+	private String timeStamp;
+	private boolean isVisit;
 
 	public TipRecord(String time, int period, String groupName, String property) {
 		this.time = time;
 		this.period = period;
 		this.groupName = groupName;
 		this.property = property;
+		this.timeStamp = "";
+		this.isVisit = false;
+	}
+
+	public String getTimeStamp() {
+		return timeStamp;
+	}
+
+	public void setTimeStamp(String timeStamp) {
+		this.timeStamp = timeStamp;
+	}
+
+	public boolean isVisit() {
+		return isVisit;
+	}
+
+	public void setVisit(boolean visit) {
+		isVisit = visit;
 	}
 
 	public int getPeriod() {

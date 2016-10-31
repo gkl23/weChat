@@ -2,12 +2,15 @@ package weChat;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
 /**
  * 对话框界面
@@ -72,5 +75,17 @@ public class LoadingDialogJFrame extends JFrame {
 				dispose();
 			}
 		}, 2 * 1000); // 2s后自动关闭
+	}
+
+	/**
+	 * 程序异常，报错并退出
+	 * 
+	 * @param errorText
+	 *            错误提示
+	 */
+	public void shutdown(String errorText) {
+		setVisible(false);
+		JOptionPane.showMessageDialog(null, errorText, "错误", JOptionPane.ERROR_MESSAGE);
+		System.exit(0);
 	}
 }
