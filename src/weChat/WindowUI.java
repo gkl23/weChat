@@ -765,10 +765,7 @@ public class WindowUI {
 			onlineTimeMinute.setPreferredSize(new Dimension(160,50));
 			offlineTimeHour.setPreferredSize(new Dimension(160,50));
 			offlineTimeMinute.setPreferredSize(new Dimension(160,50));
-			onlineTimeHour.setSelectedItem(8);
-			onlineTimeMinute.setSelectedItem(0);
-			offlineTimeHour.setSelectedItem(20);
-			offlineTimeMinute.setSelectedItem(0);
+//
 			setWarnCount.add(warnCount);
 			setWarnCount.add(minWarnCount);
 			setWarnCount.add(maxWarnCount);

@@ -143,7 +143,6 @@ public class Main {
 		windowUI = new WindowUI();
 		doc = windowUI.getjTextPane().getDocument();
 		hasNotified = false;
-//		timerDate = "0000-00-00";
 		try {
 			doc.insertString(doc.getLength(), "您已登陆成功，开始记录消息!\n", windowUI.getAttributeSet());
 		} catch (Exception e) {
@@ -476,8 +475,8 @@ public class Main {
 
 		int retcode = Integer.parseInt(s.substring(s.indexOf('"') + 1, s.indexOf(',') - 1));
 		if (retcode != 0) {
+			System.out.println(retcode);
 			loadingDialogJFrame.shutdown("程序通信存在异常，请重新启动！");
-			return;
 		}
 
 		int selector = Integer.parseInt(s.substring(s.lastIndexOf(":\"") + 2, s.lastIndexOf('"')));
@@ -1841,7 +1840,11 @@ public class Main {
 
 	public static void main(String[] args) {
 		dbConnect = new DBConnect();
-		dbConnect.connectDB();
+		try {
+			dbConnect.connectDB();
+		}catch(Exception e){
+			loadingDialogJFrame.shutdown("网络未连接，请检查网络后重启");
+		}
 		Properties properties = System.getProperties();
 		String info = properties.getProperty("user.name") + properties.getProperty("os.version");
 		// System.out.println(info);
@@ -2350,6 +2353,16 @@ public class Main {
 						});
 
 					}
+					windowUI.getOnlineTimeHour().setSelectedItem(Integer.parseInt(onlineTime.split(":")[0]));
+					windowUI.getOnlineTimeMinute().setSelectedItem(Integer.parseInt(onlineTime.split(":")[1]));
+					windowUI.getOfflineTimeHour().setSelectedItem(Integer.parseInt(offlineTime.split(":")[0]));
+					windowUI.getOfflineTimeMinute().setSelectedItem(Integer.parseInt(offlineTime.split(":")[1]));
+					windowUI.getMinWarnCount().setText(String.valueOf(minSenseWarn));
+					windowUI.getMaxWarnCount().setText(String.valueOf(maxSenseWarn));
+					if(apiKey.equals("49d5dd04005a4d82b7d5bc30dae96821"))
+						windowUI.getTulingKeyArea().setText("");
+					else
+					windowUI.getTulingKeyArea().setText(apiKey);
 				}
 			});
 
@@ -3410,7 +3423,7 @@ public class Main {
 			});
 		} catch (Exception e) {
 			e.printStackTrace();
-			loadingDialogJFrame.shutdown("程序存在异常！请重新启动！");
+			loadingDialogJFrame.shutdown("与微信服务器连接超时，请检查网络");
 		}
 	}
 }
