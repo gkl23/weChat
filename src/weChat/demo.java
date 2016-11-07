@@ -2,9 +2,7 @@ package weChat;
 
 import java.awt.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -13,6 +11,6 @@ import java.util.List;
 public class demo {
 	public static void main(String args[]) throws Exception {
 		WindowUI windowUI = new WindowUI();
-		windowUI.getSetFrame().setVisible(true);
+		System.out.println(windowUI.getDf().parse(windowUI.getDf().format(new Date())));
 	}
 }

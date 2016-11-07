@@ -1577,7 +1577,8 @@ public class Main {
 				try {
 					Date offline = windowUI.getDf().parse(offlineTime);
 					Date online = windowUI.getDf().parse(onlineTime);
-					if (online.before(new Date()) && offline.after(new Date())) {
+					if (online.before(windowUI.getDf().parse(windowUI.getDf().format(new Date()))) &&
+							offline.after(windowUI.getDf().parse(windowUI.getDf().format(new Date())))) {
 						isOnline = true;
 					}
 					else{
@@ -3423,7 +3424,7 @@ public class Main {
 			});
 		} catch (Exception e) {
 			e.printStackTrace();
-			loadingDialogJFrame.shutdown("与微信服务器连接超时，请检查网络");
+			loadingDialogJFrame.shutdown("与微信服务器连接超时，请检查网络后重启");
 		}
 	}
 }
