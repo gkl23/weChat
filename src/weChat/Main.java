@@ -83,8 +83,7 @@ public class Main {
 	// 群聊id，群名
 	private static List<String> groupNameList = new ArrayList<>();
 	private static List<String> recordList = new ArrayList<>();
-	private static Map<String,GroupInfo> tempGroupInfoList = new HashMap<>();
-	private static List<GroupInfo> groupInfoList = new ArrayList<>();
+	private static Map<String,GroupInfo> groupInfoList = new HashMap<>();
 	private static Map<String, UserInfo> userInfoList = new HashMap<String, UserInfo>();
 	private static Map<String, String> publicReply = new HashMap<>();
 	private static Map<String, String> privateReply = new HashMap<>();
@@ -409,17 +408,6 @@ public class Main {
 	}
 
 	/**
-	 * 构建一个按照拼音排序的groupInfoList
-	 */
-	private void reOrderGroupList(){
-		for(int i = 0;i<groupNameList.size();i++)
-			for(GroupInfo groupInfo:tempGroupInfoList.values()){
-				if(groupNameList.get(i).equals(groupInfo.getGroupName()+groupInfo.getGroupID()))
-					groupInfoList.add(groupInfo);
-			}
-	}
-
-	/**
 	 * SyncKey转换
 	 *
 	 * @param s
@@ -550,7 +538,7 @@ public class Main {
 
 					// 对from等变量进行处理，便于保存消息记录
 					if (from.startsWith("@@")) { // 如果消息来自群聊
-						for(GroupInfo groupInfo:groupInfoList)
+						for(GroupInfo groupInfo:groupInfoList.values())
 							if(groupInfo.getGroupID().equals(from)) {
 								group = groupInfo;
 								break;
@@ -579,7 +567,7 @@ public class Main {
 							to = "我";
 							isListen = true;
 						} else if (toId.startsWith("@@")) { // 自己发送到群聊的消息
-							for(GroupInfo groupInfo:groupInfoList)
+							for(GroupInfo groupInfo:groupInfoList.values())
 								if(groupInfo.getGroupID().equals(toId)) {
 									group = groupInfo;
 									break;
@@ -869,7 +857,7 @@ public class Main {
 															+ "您没有跨群（回复）权限，请私聊我开通跨群（回复）权限！";
 													replyMsg(replyInGroupContent, groupID);
 												} else if (windowUI.getRequestKeyword().equals(acrossKeyword)) {
-													for (GroupInfo groupInfo : groupInfoList)
+													for (GroupInfo groupInfo : groupInfoList.values())
 														if (groupInfo.getAcrossGroupFlag()) {
 															replyInGroupContent = groupName + "@" + to + "（"
 																	+ windowUI.getRequestKeyword() + "）："
@@ -884,7 +872,7 @@ public class Main {
 														String[] nameArray = names.split("@");
 														boolean hasName = false;
 														if (nameArray.length > 1)
-															for (GroupInfo groupInfo : groupInfoList)
+															for (GroupInfo groupInfo : groupInfoList.values())
 																if (groupInfo.getGroupName().equals(nameArray[0])) {
 																	for (UserInfo userInfo : groupInfo.getGroup().values())
 																		if (userInfo.getRemarkName().equals(nameArray[1])) {
@@ -893,7 +881,7 @@ public class Main {
 																		}
 																}
 														if (hasName) {
-															for (GroupInfo groupInfo : groupInfoList)
+															for (GroupInfo groupInfo : groupInfoList.values())
 																if (groupInfo.getAcrossGroupFlag()) {
 																	replyInGroupContent = groupName + "@" + to + "（"
 																			+ windowUI.getReplyKeyword() + "）：" + content;
@@ -1050,7 +1038,7 @@ public class Main {
 								if (userID.equals(fromId)) { // 自己发出的消息
 									fromUserListOrGroupList = userInfoList.get(toId) != null;
 									if (!fromUserListOrGroupList)
-										for(GroupInfo groupInfo:groupInfoList)
+										for(GroupInfo groupInfo:groupInfoList.values())
 											if(groupInfo.getGroupID().equals(toId)) {
 												fromUserListOrGroupList = true;
 												break;
@@ -1352,7 +1340,6 @@ public class Main {
 	 */
 	private void getGroupList() {
 		groupNameList.clear();
-		groupInfoList.clear();
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?type=ex&r=" + timeStamp
 				+ "&lang=zh_CN&pass_ticket=" + pass_ticket;
 		js.clear();
@@ -1376,7 +1363,7 @@ public class Main {
 		for (int i = 0; i < contactList.size(); i++) {
 			groupId = contactList.getJSONObject(i).getString("UserName");
 			GroupInfo groupInfo = null;
-			for(GroupInfo group:groupInfoList)
+			for(GroupInfo group:groupInfoList.values())
 				if(group.getGroupID().equals(groupId)) {
 					groupInfo = group;
 					break;
@@ -1408,12 +1395,11 @@ public class Main {
 					userInfo.setRemarkName(jsonArray.getJSONObject(j).getString("NickName"));
 				groupInfo.getGroup().put(userId, userInfo);
 			}
-			tempGroupInfoList.put(groupInfo.getGroupID(),groupInfo);
+			groupInfoList.put(groupInfo.getGroupID(),groupInfo);
 			if(!groupNameList.contains(groupInfo.getGroupName()+groupInfo.getGroupID()))
 			groupNameList.add(groupInfo.getGroupName()+groupInfo.getGroupID());
 		}
 		Collections.sort(groupNameList,new PinyinComparator());
-		this.reOrderGroupList();
 	}
 
 	/**
@@ -1601,7 +1587,7 @@ public class Main {
 								tipRecord.setTimeStamp(df.format(now).split(" ")[0]);
 							}
 							if(df.format(now).split(" ")[0].equals(tipRecord.getTimeStamp())&&!tipRecord.isVisit()) {
-								for (GroupInfo groupInfo : groupInfoList) {
+								for (GroupInfo groupInfo : groupInfoList.values()) {
 									if (groupInfo.getGroupName().equals(tipRecord.getGroupName())) {
 										tipGroupID = groupInfo.getGroupID();
 										break;
@@ -1614,7 +1600,7 @@ public class Main {
 						// 间隔时间发布
 						else if (windowUI.getDf().format(now).toString().equals(tipRecord.getTime())
 								&&tipRecord.getPeriod() != 0) {
-							for (GroupInfo groupInfo : groupInfoList) {
+							for (GroupInfo groupInfo : groupInfoList.values()) {
 								if (groupInfo.getGroupName().equals(tipRecord.getGroupName())) {
 									tipGroupID = groupInfo.getGroupID();
 									break;
@@ -2000,7 +1986,7 @@ public class Main {
 								groupName = rs.getString("groupName");
 								memberUin = rs.getString("memberUin");
 								memberName = rs.getString("memberName");
-								for (GroupInfo groupInfo : groupInfoList)
+								for (GroupInfo groupInfo : groupInfoList.values())
 									if (groupInfo.getGroupNumberId().equals(groupNumberId)) {
 										targetGroup = groupInfo;
 										break;
@@ -2071,7 +2057,7 @@ public class Main {
 								memberUin = rs.getString("memberUin");
 								groupName = rs.getString("groupName");
 								memberName = rs.getString("memberName");
-								for (GroupInfo groupInfo : groupInfoList)
+								for (GroupInfo groupInfo : groupInfoList.values())
 									if (groupInfo.getGroupNumberId().equals(groupNumberId)) {
 										targetGroupInfo = groupInfo;
 										break;
@@ -2182,7 +2168,7 @@ public class Main {
 					windowUI.getModifyRemarkName().setEnabled(false);
 					htmlUnit.getGroupList();
 					group.clear();
-					for (GroupInfo groupInfo : groupInfoList)
+					for (GroupInfo groupInfo : groupInfoList.values())
 						group.add(groupInfo.getGroupName());
 					windowUI.setjList5(new JList(group));
 					windowUI.setjList6(new JList());
@@ -2220,7 +2206,7 @@ public class Main {
 						public void valueChanged(ListSelectionEvent e) {
 							modifyMemberList.clear();
 							modifyUserIndex = 0;
-                             for(GroupInfo groupInfo:groupInfoList){
+                             for(GroupInfo groupInfo:groupInfoList.values()){
                              	if(groupInfo.getGroupName().equals(windowUI.getjList5().getSelectedValue().toString())){
                              		modifyGroup = groupInfo;
                              		for(UserInfo userInfo:groupInfo.getGroup().values()){
@@ -2287,7 +2273,7 @@ public class Main {
 					gb.gridx = 0;
 					gb.ipadx = 0;
 					gb.fill = GridBagConstraints.VERTICAL;
-					for (final GroupInfo group : groupInfoList) {
+					for (final GroupInfo group : groupInfoList.values()) {
 						final JLabel jLabel = new JLabel(group.getGroupName());
 						jLabel.setBorder(BorderFactory.createTitledBorder("原群名"));
 						final JTextField jTextArea = new JTextField(20);
@@ -2332,7 +2318,7 @@ public class Main {
 							@Override
 							public void actionPerformed(ActionEvent e) {
 								groupMemberListJPanel.removeAll();
-								for (GroupInfo groupInfo : groupInfoList)
+								for (GroupInfo groupInfo : groupInfoList.values())
 									if (groupInfo.getGroupName().equals(groupCheckBox.getText().split("\\(")[0])
 											&& groupInfo.getAcrossGroupFlag()) {
 										for (final UserInfo userInfo : groupInfo.getGroup().values()) {
@@ -2374,7 +2360,7 @@ public class Main {
 					windowUI.getInviteIntoGroup().setEnabled(false);
 					htmlUnit.getGroupList();
 					group.clear();
-					for (GroupInfo groupInfo : groupInfoList)
+					for (GroupInfo groupInfo : groupInfoList.values())
 						group.add(groupInfo.getGroupName());
 					windowUI.setjList2(new JList(group));
 					invitedGroup = null;
@@ -2432,7 +2418,7 @@ public class Main {
 							inviteFriendName.clear();
 							for (UserInfo userInfo : userInfoList.values())
 								inviteFriendName.add(userInfo.getRemarkName());
-							for (GroupInfo groupInfo : groupInfoList) {
+							for (GroupInfo groupInfo : groupInfoList.values()) {
 								if (groupInfo.getGroupName()
 										.equals(windowUI.getjList2().getSelectedValue().toString())) {
 									invitedGroup = groupInfo;
@@ -2541,7 +2527,7 @@ public class Main {
 					windowUI.getRemoveFromGroup().setEnabled(false);
 					htmlUnit.getGroupList();
 					group.clear();
-					for (GroupInfo groupInfo : groupInfoList)
+					for (GroupInfo groupInfo : groupInfoList.values())
 						group.add(groupInfo.getGroupName());
 					windowUI.setjList3(new JList(group));
 					removeGroup = null;
@@ -2583,7 +2569,7 @@ public class Main {
 						@Override
 						public void valueChanged(ListSelectionEvent e) {
 							removeFriendName.clear();
-							for (GroupInfo groupInfo : groupInfoList)
+							for (GroupInfo groupInfo : groupInfoList.values())
 								if (groupInfo.getGroupName()
 										.equals(windowUI.getjList3().getSelectedValue().toString())) {
 									removeGroup = groupInfo;
@@ -2782,7 +2768,7 @@ public class Main {
 					htmlUnit.getGroupList();
 					windowUI.getGroupNamePeriodArea().removeAllItems();
 					windowUI.getGroupNameArea().removeAllItems();
-					for (GroupInfo groupInfo : groupInfoList) {
+					for (GroupInfo groupInfo : groupInfoList.values()) {
 						windowUI.getGroupNamePeriodArea().addItem(groupInfo.getGroupName());
 						windowUI.getGroupNameArea().addItem(groupInfo.getGroupName());
 					}
@@ -2877,18 +2863,21 @@ public class Main {
 					windowUI.getShowGroupList().setEnabled(false);
 					windowUI.getShowGroupPanel().removeAll();
 					htmlUnit.getGroupList();
-					for (final GroupInfo groupInfo : groupInfoList) {
-						final JCheckBox jc = new JCheckBox(groupInfo.getGroupName()+"("+groupInfo.getGroupNumberId().split("@")[0]+")");
-						jc.setSelected(groupInfo.getFlag());
-						jc.setBackground(windowUI.getShowGroupPanel().getBackground());
-						windowUI.getShowGroupPanel().add(jc);
-						jc.addChangeListener(new ChangeListener() {
-							@Override
-							public void stateChanged(ChangeEvent e) {
-								groupInfo.setFlag(jc.isSelected());
+					for(int i = 0;i<groupNameList.size();i++)
+						for(final GroupInfo groupInfo:groupInfoList.values()){
+							if(groupNameList.get(i).equals(groupInfo.getGroupName()+groupInfo.getGroupID())){
+								final JCheckBox jc = new JCheckBox(groupInfo.getGroupName()+"("+groupInfo.getGroupNumberId().split("@")[0]+")");
+								jc.setSelected(groupInfo.getFlag());
+								jc.setBackground(windowUI.getShowGroupPanel().getBackground());
+								windowUI.getShowGroupPanel().add(jc);
+								jc.addChangeListener(new ChangeListener() {
+									@Override
+									public void stateChanged(ChangeEvent e) {
+										groupInfo.setFlag(jc.isSelected());
+									}
+								});
 							}
-						});
-					}
+						}
 					windowUI.getChooseGroup().setVisible(true);
 					windowUI.getChooseGroup().pack();
 				}
