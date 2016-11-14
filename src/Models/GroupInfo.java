@@ -1,5 +1,6 @@
 package Models;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import net.sourceforge.pinyin4j.PinyinHelper;
 
 import java.util.Comparator;
@@ -10,13 +11,23 @@ import java.util.Map;
  * Created by huzhejie on 2016/7/19.
  */
 public class GroupInfo{
-	private Boolean acrossGroupFlag;// 开启跨群功能
+	private Boolean acrossGroupFlag=false;// 开启跨群功能
+	private Boolean boardcastFlag=false;// 开启直播功能
+	private Boolean fromGroupFlag = false;//嘉宾源于哪个群
 	private Boolean flag = false;
 	private String groupID = ""; // 加密的群聊id
 	private String groupName = "";
 	private String groupNumberId = ""; // 解密的群聊id
 	private int memberCount;
 	private Map<String, UserInfo> group = new HashMap<String, UserInfo>(); // 群成员加密id和信息组成的键值对列表
+
+	public Boolean getFromGroupFlag() {
+		return fromGroupFlag;
+	}
+
+	public void setFromGroupFlag(Boolean fromGroupFlag) {
+		this.fromGroupFlag = fromGroupFlag;
+	}
 
 	public String getGroupNumberId() {
 		return groupNumberId;
@@ -74,4 +85,11 @@ public class GroupInfo{
 		this.group = group;
 	}
 
+	public Boolean getBoardcastFlag() {
+		return boardcastFlag;
+	}
+
+	public void setBoardcastFlag(Boolean boardcastFlag) {
+		this.boardcastFlag = boardcastFlag;
+	}
 }

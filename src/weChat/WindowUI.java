@@ -97,6 +97,10 @@ public class WindowUI {
 	private static JPanel setHourAndMinutePanel = new JPanel();
 	private static JPanel remarkNamePanel = new JPanel();
 	private static JPanel setRemarkNamePanel = new JPanel();
+	private static JPanel setGroupBoardcastPanel = new JPanel();//跨群直播面板
+	private static JPanel setTestTimePanel = new JPanel();//测试时间面板
+	private static JPanel setStartTimePanel = new JPanel();//开始时间面板
+	private static JPanel groupBoardCastPanel = new JPanel();//跨群直播面板
 	private static JScrollPane jScrollPane;
 	private static JScrollPane groupJScrollPane;
 	private static JScrollPane tipTimeJScrollPane;
@@ -110,6 +114,7 @@ public class WindowUI {
 	private static JScrollPane removeScrollPane2;
 	private static JScrollPane modifyScrollPane1;
 	private static JScrollPane modifyScrollPane2;
+	private static JScrollPane boardcastScrollPane;
 	private static JLabel tuLing = new JLabel("   图灵机器人 key  ");// 存放图灵key
 	private static JLabel warnCount = new JLabel("敏感警告次数设置:  ");
 	private static JLabel setOnlineTime = new JLabel("上下线时间设置: ");
@@ -117,6 +122,8 @@ public class WindowUI {
 	private static JLabel userHeaderImg = new JLabel();// 存放用户头像
 	private static JLabel robotUserName = new JLabel("用户名：");
 	private static JLabel robotUserPasswd = new JLabel("密码：");
+	private static JLabel testTime = new JLabel("测试时间: ");
+	private static JLabel startBoardcastTime = new JLabel("开始时间: ");
 	private static JLabel jLabel_0 = new JLabel();// 存放二维码
 	private static JPanel jPanel_1 = new JPanel();// 存放检查群消息按钮
 	private static JPanel jPanel_2 = new JPanel();// 好友自动通过
@@ -161,6 +168,14 @@ public class WindowUI {
 	private static JComboBox<Integer> onlineTimeMinute = new JComboBox<>();//上线时间分钟
 	private static JComboBox<Integer> offlineTimeHour = new JComboBox<>();//下线时间小时
 	private static JComboBox<Integer> offlineTimeMinute = new JComboBox<>();//下线时间分钟
+	private static JComboBox<Integer> boardcastTestHour = new JComboBox<>();
+	private static JComboBox<Integer> boardcastTestMinute = new JComboBox<>();
+	private static JComboBox<Integer> boardcastTestEndHour = new JComboBox<>();
+	private static JComboBox<Integer> boardcastTestEndMinute = new JComboBox<>();
+	private static JComboBox<Integer> boardcastStartHour = new JComboBox<>();
+	private static JComboBox<Integer> boardcastStartMinute = new JComboBox<>();
+	private static JComboBox<Integer> boardcastEndHour = new JComboBox<>();
+	private static JComboBox<Integer> boardcastEndMinute = new JComboBox<>();
 	private static JComboBox groupNameArea = new JComboBox();// 定时发送中选择群名的选择框
 	private static JComboBox groupNamePeriodArea = new JComboBox();// 间隔发布中选择群名
 	private static JButton addTipTimeButton = new JButton("添加");
@@ -177,6 +192,7 @@ public class WindowUI {
 	private static JButton modifyWarnCount = new JButton("修改");
 	private static JButton modifyOnlineTime = new JButton("修改");
 	private static JButton modifyName = new JButton("修改备注");
+	private static JButton startBoardcast = new JButton("开始直播");
 	private static SimpleAttributeSet attributeSet = new SimpleAttributeSet();
 	private static GridBagConstraints gb = new GridBagConstraints();
 	private static SimpleDateFormat df = new SimpleDateFormat("HH:mm");
@@ -733,25 +749,49 @@ public class WindowUI {
 			remarkNamePanel.add(modifyName);
 
 			setGroupNamePanel.setLayout(new GridBagLayout());
+			setGroupBoardcastPanel.setLayout(new GridBagLayout());
+			startBoardcast.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
+			startBoardcast.setForeground(Color.white);
+			setTestTimePanel.setLayout(new GridLayout(0,5,20,20));
+			setStartTimePanel.setLayout(new GridLayout(0,5,20,20));
+			groupBoardCastPanel.setLayout(new GridLayout(0,3,20,20));
 			setTuLingAPIPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
 			setWarnCount.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
 			setOnlineTimePanel.setLayout(new FlowLayout(FlowLayout.CENTER,30,20));
 			setHourAndMinutePanel.setLayout(new GridLayout(2,2,10,10));
             setOnlineTime.setFont(new Font("黑体", 1, 16));
 			warnCount.setFont(new Font("黑体", 1, 16));
+			testTime.setFont(new Font("黑体",1,16));
+			startBoardcastTime.setFont(new Font("黑体",1,16));
 			minWarnCount.setUI(new BETextFieldUI());
 			maxWarnCount.setUI(new BETextFieldUI());
 			onlineTimeHour.setUI(new BEComboBoxUI());
 			onlineTimeMinute.setUI(new BEComboBoxUI());
 			offlineTimeHour.setUI(new BEComboBoxUI());
 			offlineTimeMinute.setUI(new BEComboBoxUI());
+			boardcastStartHour.setUI(new BEComboBoxUI());
+			boardcastStartMinute.setUI(new BEComboBoxUI());
+			boardcastEndHour.setUI(new BEComboBoxUI());
+			boardcastEndMinute.setUI(new BEComboBoxUI());
+			boardcastTestEndHour.setUI(new BEComboBoxUI());
+			boardcastTestEndMinute.setUI(new BEComboBoxUI());
+			boardcastTestHour.setUI(new BEComboBoxUI());
+			boardcastTestMinute.setUI(new BEComboBoxUI());
 			for(int i = 0;i<24;i++) {
 				onlineTimeHour.addItem(i);
 				offlineTimeHour.addItem(i);
+				boardcastStartHour.addItem(i);
+				boardcastTestHour.addItem(i);
+				boardcastTestEndHour.addItem(i);
+				boardcastEndHour.addItem(i);
 			}
 			for(int j = 0;j<60;j++){
 				onlineTimeMinute.addItem(j);
 				offlineTimeMinute.addItem(j);
+				boardcastTestMinute.addItem(j);
+				boardcastStartMinute.addItem(j);
+				boardcastTestEndMinute.addItem(j);
+				boardcastEndMinute.addItem(j);
 			}
 			minWarnCount.setDocument(new CustomJTextFieldDocument(10, Type.NUMBER));
 			maxWarnCount.setDocument(new CustomJTextFieldDocument(10, Type.NUMBER));
@@ -761,10 +801,28 @@ public class WindowUI {
 			onlineTimeMinute.setBorder(BorderFactory.createTitledBorder("上线时间(分钟)"));
 			offlineTimeHour.setBorder(BorderFactory.createTitledBorder("下线时间(小时)"));
 			offlineTimeMinute.setBorder(BorderFactory.createTitledBorder("下线时间(分钟)"));
+			boardcastTestHour.setBorder(BorderFactory.createTitledBorder("小时"));
+			boardcastTestMinute.setBorder(BorderFactory.createTitledBorder("分钟"));
+			boardcastEndMinute.setBorder(BorderFactory.createTitledBorder("分钟"));
+			boardcastEndHour.setBorder(BorderFactory.createTitledBorder("小时"));
+			boardcastTestEndHour.setBorder(BorderFactory.createTitledBorder("小时"));
+			boardcastTestEndMinute.setBorder(BorderFactory.createTitledBorder("分钟"));
+			boardcastStartHour.setBorder(BorderFactory.createTitledBorder("小时"));
+			boardcastStartMinute.setBorder(BorderFactory.createTitledBorder("分钟"));
 			onlineTimeHour.setPreferredSize(new Dimension(160,50));
 			onlineTimeMinute.setPreferredSize(new Dimension(160,50));
 			offlineTimeHour.setPreferredSize(new Dimension(160,50));
 			offlineTimeMinute.setPreferredSize(new Dimension(160,50));
+			setTestTimePanel.add(testTime);
+			setTestTimePanel.add(boardcastTestHour);
+			setTestTimePanel.add(boardcastTestMinute);
+			setTestTimePanel.add(boardcastTestEndHour);
+			setTestTimePanel.add(boardcastTestEndMinute);
+			setStartTimePanel.add(startBoardcastTime);
+			setStartTimePanel.add(boardcastStartHour);
+			setStartTimePanel.add(boardcastStartMinute);
+			setStartTimePanel.add(boardcastEndHour);
+			setStartTimePanel.add(boardcastEndMinute);
 //
 			setWarnCount.add(warnCount);
 			setWarnCount.add(minWarnCount);
@@ -796,6 +854,7 @@ public class WindowUI {
 			setPanel.add("修改图灵key", setTuLingAPIPanel);
 			setPanel.add("敏感词警告次数范围", setWarnCount);
 			setPanel.add("设置上下线时间",setOnlineTimePanel);
+			setPanel.add("跨群直播设置",setGroupBoardcastPanel);
 
 			log.setSize(100, 100);
 			log.setUI(new BEButtonUI().setNormalColor(BEButtonUI.NormalColor.green));
@@ -904,6 +963,95 @@ public class WindowUI {
 		tipPeriodJScrollPane.getViewport().doLayout();
 		verticalBar.setValue(verticalBar.getMaximum());
 		tipPeriodPanel.updateUI();
+	}
+
+	public static JPanel getGroupBoardCastPanel() {
+		return groupBoardCastPanel;
+	}
+
+	public static JComboBox<Integer> getBoardcastTestEndHour() {
+		return boardcastTestEndHour;
+	}
+
+	public static void setBoardcastTestEndHour(JComboBox<Integer> boardcastTestEndHour) {
+		WindowUI.boardcastTestEndHour = boardcastTestEndHour;
+	}
+
+	public static JComboBox<Integer> getBoardcastTestEndMinute() {
+		return boardcastTestEndMinute;
+	}
+
+	public static void setBoardcastTestEndMinute(JComboBox<Integer> boardcastTestEndMinute) {
+		WindowUI.boardcastTestEndMinute = boardcastTestEndMinute;
+	}
+
+	public static JComboBox<Integer> getBoardcastEndHour() {
+		return boardcastEndHour;
+	}
+
+	public static void setBoardcastEndHour(JComboBox<Integer> boardcastEndHour) {
+		WindowUI.boardcastEndHour = boardcastEndHour;
+	}
+
+	public static JComboBox<Integer> getBoardcastEndMinute() {
+		return boardcastEndMinute;
+	}
+
+	public static void setBoardcastEndMinute(JComboBox<Integer> boardcastEndMinute) {
+		WindowUI.boardcastEndMinute = boardcastEndMinute;
+	}
+
+	public static void setGroupBoardCastPanel(JPanel groupBoardCastPanel) {
+		WindowUI.groupBoardCastPanel = groupBoardCastPanel;
+	}
+
+	public static JScrollPane getBoardcastScrollPane() {
+		return boardcastScrollPane;
+	}
+
+	public static void setBoardcastScrollPane(JScrollPane boardcastScrollPane) {
+		WindowUI.boardcastScrollPane = boardcastScrollPane;
+	}
+
+
+	public static JComboBox<Integer> getBoardcastTestHour() {
+		return boardcastTestHour;
+	}
+
+	public static void setBoardcastTestHour(JComboBox<Integer> boardcastTestHour) {
+		WindowUI.boardcastTestHour = boardcastTestHour;
+	}
+
+	public static JComboBox<Integer> getBoardcastTestMinute() {
+		return boardcastTestMinute;
+	}
+
+	public static void setBoardcastTestMinute(JComboBox<Integer> boardcastTestMinute) {
+		WindowUI.boardcastTestMinute = boardcastTestMinute;
+	}
+
+	public static JComboBox<Integer> getBoardcastStartHour() {
+		return boardcastStartHour;
+	}
+
+	public static void setBoardcastStartHour(JComboBox<Integer> boardcastStartHour) {
+		WindowUI.boardcastStartHour = boardcastStartHour;
+	}
+
+	public static JPanel getSetGroupBoardcastPanel() {
+		return setGroupBoardcastPanel;
+	}
+
+	public static void setSetGroupBoardcastPanel(JPanel setGroupBoardcastPanel) {
+		WindowUI.setGroupBoardcastPanel = setGroupBoardcastPanel;
+	}
+
+	public static JComboBox<Integer> getBoardcastStartMinute() {
+		return boardcastStartMinute;
+	}
+
+	public static void setBoardcastStartMinute(JComboBox<Integer> boardcastStartMinute) {
+		WindowUI.boardcastStartMinute = boardcastStartMinute;
 	}
 
 	public static JComboBox<Integer> getOnlineTimeHour() {
@@ -1718,6 +1866,22 @@ public class WindowUI {
 		return propertyTimeArea;
 	}
 
+	public static JPanel getSetTestTimePanel() {
+		return setTestTimePanel;
+	}
+
+	public static void setSetTestTimePanel(JPanel setTestTimePanel) {
+		WindowUI.setTestTimePanel = setTestTimePanel;
+	}
+
+	public static JPanel getSetStartTimePanel() {
+		return setStartTimePanel;
+	}
+
+	public static void setSetStartTimePanel(JPanel setStartTimePanel) {
+		WindowUI.setStartTimePanel = setStartTimePanel;
+	}
+
 	public static void setPropertyTimeArea(JTextArea propertyTimeArea) {
 		WindowUI.propertyTimeArea = propertyTimeArea;
 	}
@@ -2021,6 +2185,14 @@ public class WindowUI {
 
 	public static void setModifyScrollPane2(JScrollPane modifyScrollPane2) {
 		WindowUI.modifyScrollPane2 = modifyScrollPane2;
+	}
+
+	public static JButton getStartBoardcast() {
+		return startBoardcast;
+	}
+
+	public static void setStartBoardcast(JButton startBoardcast) {
+		WindowUI.startBoardcast = startBoardcast;
 	}
 
 	public static void setjPanel_13(JPanel jPanel_13) {

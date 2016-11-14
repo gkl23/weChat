@@ -9,6 +9,15 @@ public class UserInfo {
     private String signature="";
     private boolean acrossGroupFlag = false;
     private String uin = "";
+    private boolean boardcastFlag = false;
+
+    public boolean isBoardcastFlag() {
+        return boardcastFlag;
+    }
+
+    public void setBoardcastFlag(boolean boardcastFlag) {
+        this.boardcastFlag = boardcastFlag;
+    }
 
     public String getUin() {
         return uin;

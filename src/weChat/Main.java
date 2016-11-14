@@ -48,10 +48,19 @@ public class Main {
 	private static Boolean sensitiveFlag = true; // 敏感词警告
 	private static Boolean atModeFlag = true;// 控制@模式
 	private static Boolean isLogin = false;// 是否登录
+	private static Boolean isBoardcast = false;//是否开启群直播
+	private static Boolean isTest = false;//是否开始测试
+	private static Boolean isStart = false;//是否开始直播
+	private static Boolean isDiscuss = false;//是否开始讨论
+	private static Boolean isEnd = false;//是否结束群直播
 	private static int minSenseWarn;
 	private static int maxSenseWarn;
 	private static String onlineTime;//上线时间
 	private static String offlineTime;//下线时间
+	private static Date testStartTime;//测试开始时间
+	private static Date testEndTime;//测试结束时间
+	private static Date boardStartTime;//直播开始时间
+	private static Date boardcastEndTime;//直播结束时间
 	private static String apiKey = "";
 	private static String url;
 	private static String timeStamp;
@@ -68,6 +77,8 @@ public class Main {
 	private static String memberID = "";
 	private static String groupID = "";
 	private static String tipGroupID = "";
+	private static String saveGroupName ="";
+	private static String selectedGroupName = "";
 	private static final String ATDELIM = " "; // ！！注意，@消息的分隔符并不是空格，所以设为常量
 	private String webwx_data_ticket; // 用于上传图片和文件
 	private int fileIndex; // 记录上传文件的序号
@@ -83,7 +94,7 @@ public class Main {
 	// 群聊id，群名
 	private static List<String> groupNameList = new ArrayList<>();
 	private static List<String> recordList = new ArrayList<>();
-	private static Map<String,GroupInfo> groupInfoList = new HashMap<>();
+	private static Map<String, GroupInfo> groupInfoList = new HashMap<>();
 	private static Map<String, UserInfo> userInfoList = new HashMap<String, UserInfo>();
 	private static Map<String, String> publicReply = new HashMap<>();
 	private static Map<String, String> privateReply = new HashMap<>();
@@ -131,8 +142,8 @@ public class Main {
 
 	private static Vector<String> group = new Vector<>();// 存放现在所有群的群名
 	private static Vector<String> modifyMemberList = new Vector<>();
-    private static UserInfo modifyMember = new UserInfo();//存放需要修改的list
-    private static int modifyUserIndex;
+	private static UserInfo modifyMember = new UserInfo();//存放需要修改的list
+	private static int modifyUserIndex;
 //	private String timerDate; // 记录定时发布的日期，防止一个时刻同时发送多条定时消息
 
 	/**
@@ -454,6 +465,15 @@ public class Main {
 	 */
 	private void checkMsg() {
 		timeStamp = String.valueOf(System.currentTimeMillis());
+		//检查是否开始直播，以及直播是处于测试阶段还是开始了
+		if(isBoardcast)
+			try {
+				isTest = checkTime(testStartTime, testEndTime);
+				isStart = checkTime(boardStartTime,boardcastEndTime);
+				isEnd = boardcastEndTime.before(windowUI.getDf().parse(windowUI.getDf().format(new Date())));
+			}catch (Exception e){
+				e.printStackTrace();
+			}
 		String url = "https://webpush." + host + "/cgi-bin/mmwebwx-bin/synccheck?r=" + timeStamp + "&skey=" + skey
 				+ "&sid=" + wxsid + "&uin=" + wxuin + "&deviceid=" + DeviceID + "&synckey=" + syncKeyList.toString()
 				+ "&_=" + timeStamp;
@@ -463,8 +483,10 @@ public class Main {
 
 		int retcode = Integer.parseInt(s.substring(s.indexOf('"') + 1, s.indexOf(',') - 1));
 		if (retcode != 0) {
-			System.out.println(retcode);
-			loadingDialogJFrame.shutdown("程序通信存在异常，请重新启动！");
+			if(retcode==1101)
+				loadingDialogJFrame.shutdown("与微信服务器断开连接，请重新启动软件！");
+			else
+				return;
 		}
 
 		int selector = Integer.parseInt(s.substring(s.lastIndexOf(":\"") + 2, s.lastIndexOf('"')));
@@ -668,7 +690,7 @@ public class Main {
 											dbConnect.mergeActiveDegree(userName_robot, groupNumberId, memberUin, from, to);
 
 										/*
-										 * 处理活跃榜和签到榜，拦截消息回复
+										 * 处理活跃榜和签到榜以及直播命令，拦截消息回复
 										 */
 											List<String> result = null;
 											int j, len;
@@ -852,10 +874,11 @@ public class Main {
 											if (atFlag) {
 												String acrossKeyword = content.indexOf(' ') < 0 ? ""
 														: content.substring(0, content.indexOf(' '));
-												if (!member.isAcrossGroupFlag()) { // 如果用户没有赋予跨群权限
+												if(!member.isAcrossGroupFlag()) { // 如果用户没有赋予跨群权限
 													replyInGroupContent = "@" + to + ATDELIM
 															+ "您没有跨群（回复）权限，请私聊我开通跨群（回复）权限！";
 													replyMsg(replyInGroupContent, groupID);
+													atFlag = false;// 取消自动回复，只进行跨群交流
 												} else if (windowUI.getRequestKeyword().equals(acrossKeyword)) {
 													for (GroupInfo groupInfo : groupInfoList.values())
 														if (groupInfo.getAcrossGroupFlag()) {
@@ -1277,7 +1300,7 @@ public class Main {
 	 * 修改备注姓名
 	 * @param remarkName 修改后的备注
 	 * @param userId 被修改用户的用户id（加密）
-     */
+	 */
 	private boolean modifyRemarkName(String userId,String remarkName){
 		url = "https://"+host+"/cgi-bin/mmwebwx-bin/webwxoplog?pass_ticket="+pass_ticket;
 		js = new JSONObject();
@@ -1397,7 +1420,7 @@ public class Main {
 			}
 			groupInfoList.put(groupInfo.getGroupID(),groupInfo);
 			if(!groupNameList.contains(groupInfo.getGroupName()+groupInfo.getGroupID()))
-			groupNameList.add(groupInfo.getGroupName()+groupInfo.getGroupID());
+				groupNameList.add(groupInfo.getGroupName()+groupInfo.getGroupID());
 		}
 		Collections.sort(groupNameList,new PinyinComparator());
 	}
@@ -1551,6 +1574,23 @@ public class Main {
 		url = "https://" + host + "/cgi-bin/mmwebwx-bin/webwxlogout?redirect=1&type=0&skey=" + skey;
 		HttpRequest.post(url).header("Cookie", header).send("sid=" + wxsid + "&uin=" + wxuin).body();
 	}
+	/**
+	 *
+	 */
+	private boolean checkTime(Date startTime,Date endTime){
+		Date now;
+		boolean b = false;
+		try{
+			now = windowUI.getDf().parse(windowUI.getDf().format(new Date()));
+			if(startTime.before(now)&&endTime.after(now))
+				b =true;
+			else
+				b= false;
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		return b;
+	}
 
 	/**
 	 * 开个线程监听最新消息
@@ -1560,58 +1600,54 @@ public class Main {
 
 			@Override
 			public void run() {
-				try {
-					Date offline = windowUI.getDf().parse(offlineTime);
-					Date online = windowUI.getDf().parse(onlineTime);
-					if (online.before(windowUI.getDf().parse(windowUI.getDf().format(new Date()))) &&
-							offline.after(windowUI.getDf().parse(windowUI.getDf().format(new Date())))) {
-						isOnline = true;
+				while (true) {
+					try {
+						Date offline = windowUI.getDf().parse(offlineTime);
+						Date online = windowUI.getDf().parse(onlineTime);
+						isOnline = checkTime(online,offline);
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-					else{
-						isOnline = false;
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				while (isOnline) {
-					checkMsg();
-					Date now = new Date();
-					Iterator<TipRecord> iterator = tipRecordList.iterator();
-					while (iterator.hasNext()) {
-						TipRecord tipRecord = iterator.next();
-						// 指定时间发布
-						if (windowUI.getDf().format(now).toString().equals(tipRecord.getTime())
-								&& tipRecord.getPeriod() == 0) { // 如果今天没有发布定时消息，而且现在需要发送定时消息
-							if(!df.format(now).split(" ")[0].equals(tipRecord.getTimeStamp())){
-								tipRecord.setVisit(false);
-								tipRecord.setTimeStamp(df.format(now).split(" ")[0]);
+					if (isOnline) {
+						checkMsg();
+						Date now = new Date();
+						Iterator<TipRecord> iterator = tipRecordList.iterator();
+						while (iterator.hasNext()) {
+							TipRecord tipRecord = iterator.next();
+							// 指定时间发布
+							if (windowUI.getDf().format(now).toString().equals(tipRecord.getTime())
+									&& tipRecord.getPeriod() == 0) { // 如果今天没有发布定时消息，而且现在需要发送定时消息
+								if (!df.format(now).split(" ")[0].equals(tipRecord.getTimeStamp())) {
+									tipRecord.setVisit(false);
+									tipRecord.setTimeStamp(df.format(now).split(" ")[0]);
+								}
+								if (df.format(now).split(" ")[0].equals(tipRecord.getTimeStamp()) && !tipRecord.isVisit()) {
+									for (GroupInfo groupInfo : groupInfoList.values()) {
+										if (groupInfo.getGroupName().equals(tipRecord.getGroupName())) {
+											tipGroupID = groupInfo.getGroupID();
+											break;
+										}
+									}
+									replyMsg(tipRecord.getProperty(), tipGroupID);
+									tipRecord.setVisit(true);
+								}
 							}
-							if(df.format(now).split(" ")[0].equals(tipRecord.getTimeStamp())&&!tipRecord.isVisit()) {
+							// 间隔时间发布
+							else if (windowUI.getDf().format(now).toString().equals(tipRecord.getTime())
+									&& tipRecord.getPeriod() != 0) {
 								for (GroupInfo groupInfo : groupInfoList.values()) {
 									if (groupInfo.getGroupName().equals(tipRecord.getGroupName())) {
 										tipGroupID = groupInfo.getGroupID();
 										break;
 									}
 								}
+								int period = tipRecord.getPeriod();
 								replyMsg(tipRecord.getProperty(), tipGroupID);
-								tipRecord.setVisit(true);
+								int startHour = Integer.parseInt(tipRecord.getTime().split(":")[0]);
+								String minute = tipRecord.getTime().split(":")[1];
+								String nextHour = String.valueOf((startHour + period) % 24);
+								tipRecord.setTime(nextHour + ":" + minute);
 							}
-						}
-						// 间隔时间发布
-						else if (windowUI.getDf().format(now).toString().equals(tipRecord.getTime())
-								&&tipRecord.getPeriod() != 0) {
-							for (GroupInfo groupInfo : groupInfoList.values()) {
-								if (groupInfo.getGroupName().equals(tipRecord.getGroupName())) {
-									tipGroupID = groupInfo.getGroupID();
-									break;
-								}
-							}
-							int period = tipRecord.getPeriod();
-							replyMsg(tipRecord.getProperty(), tipGroupID);
-							int startHour = Integer.parseInt(tipRecord.getTime().split(":")[0]);
-							String minute = tipRecord.getTime().split(":")[1];
-							String nextHour = String.valueOf((startHour + period)%24);
-							tipRecord.setTime(nextHour + ":" + minute);
 						}
 					}
 				}
@@ -2169,7 +2205,7 @@ public class Main {
 					htmlUnit.getGroupList();
 					group.clear();
 					for (GroupInfo groupInfo : groupInfoList.values())
-						group.add(groupInfo.getGroupName());
+						group.add(groupInfo.getGroupName()+"("+groupInfo.getGroupNumberId()+")");
 					windowUI.setjList5(new JList(group));
 					windowUI.setjList6(new JList());
 					windowUI.getjList5().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -2206,17 +2242,17 @@ public class Main {
 						public void valueChanged(ListSelectionEvent e) {
 							modifyMemberList.clear();
 							modifyUserIndex = 0;
-                             for(GroupInfo groupInfo:groupInfoList.values()){
-                             	if(groupInfo.getGroupName().equals(windowUI.getjList5().getSelectedValue().toString())){
-                             		modifyGroup = groupInfo;
-                             		for(UserInfo userInfo:groupInfo.getGroup().values()){
-                             			modifyMemberList.add(userInfo.getRemarkName());
+							for(GroupInfo groupInfo:groupInfoList.values()){
+								if(groupInfo.getGroupName().equals(windowUI.getjList5().getSelectedValue().toString().split("\\(")[0])){
+									modifyGroup = groupInfo;
+									for(UserInfo userInfo:groupInfo.getGroup().values()){
+										modifyMemberList.add(userInfo.getRemarkName());
 									}
 									break;
 								}
-							 }
-							 windowUI.getjList6().setListData(modifyMemberList);
-							 windowUI.getModifyScrollPane2().repaint();
+							}
+							windowUI.getjList6().setListData(modifyMemberList);
+							windowUI.getModifyScrollPane2().repaint();
 						}
 					});
 					windowUI.getjList6().addListSelectionListener(new ListSelectionListener() {
@@ -2255,13 +2291,32 @@ public class Main {
 					windowUI.getSet().setEnabled(false);
 					windowUI.getAcrossGroupListJPanel().removeAll();
 					windowUI.getSetGroupNamePanel().removeAll();
+					windowUI.getGroupBoardCastPanel().removeAll();
 					htmlUnit.getGroupList();
 					// 对于群名修改面板的组件改变
 					JPanel groupListJPanel = new JPanel(); // 群名列表
+					JPanel groupBoardcastPanel = new JPanel();//选择嘉宾时候的群列表
+					final JPanel memberListPanel = new JPanel(); //嘉宾群成员列表
+					final JPanel boardcastGroupListPanel = new JPanel();//群直播列表
 					groupListJPanel.setLayout(new BoxLayout(groupListJPanel, BoxLayout.Y_AXIS));
+					memberListPanel.setLayout(new BoxLayout(memberListPanel, BoxLayout.Y_AXIS));
+					groupBoardcastPanel.setLayout(new BoxLayout(groupBoardcastPanel, BoxLayout.Y_AXIS));
+					boardcastGroupListPanel.setLayout(new BoxLayout(boardcastGroupListPanel, BoxLayout.Y_AXIS));
+					JScrollPane boardcastGroupScrollPane = new JScrollPane(boardcastGroupListPanel);
+					JScrollPane memberListScrollPane = new JScrollPane(memberListPanel);
+					JScrollPane boardcastSuperScrollPane = new JScrollPane(groupBoardcastPanel);
 					JScrollPane groupListScrollPane = new JScrollPane(groupListJPanel);
+					memberListScrollPane.setUI(new BEScrollPaneUI());
 					groupListScrollPane.setUI(new BEScrollPaneUI());
+					boardcastSuperScrollPane.setUI(new BEScrollPaneUI());
+					boardcastGroupScrollPane.setUI(new BEScrollPaneUI());
+					boardcastGroupScrollPane.setBorder(BorderFactory.createTitledBorder("转发群选择"));
+					boardcastGroupScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+					boardcastGroupScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 					groupListScrollPane.setBorder(BorderFactory.createTitledBorder("群聊列表"));
+					memberListScrollPane.setBorder(BorderFactory.createTitledBorder("嘉宾选择"));
+					memberListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+					memberListScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 					final JPanel groupMemberListJPanel = new JPanel(); // 群成员列表
 					groupMemberListJPanel.setLayout(new BoxLayout(groupMemberListJPanel, BoxLayout.Y_AXIS));
 					JScrollPane groupMemberListScrollPane = new JScrollPane(groupMemberListJPanel);
@@ -2269,10 +2324,31 @@ public class Main {
 					groupMemberListScrollPane.setBorder(BorderFactory.createTitledBorder("群成员列表"));
 					windowUI.getAcrossGroupListJPanel().add(groupListScrollPane);
 					windowUI.getAcrossGroupListJPanel().add(groupMemberListScrollPane);
+					boardcastSuperScrollPane.setBorder(BorderFactory.createTitledBorder("选择群"));
+					boardcastSuperScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+					boardcastSuperScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+					windowUI.getGroupBoardCastPanel().add(boardcastSuperScrollPane);
+					windowUI.getGroupBoardCastPanel().add(memberListScrollPane);
+					windowUI.getGroupBoardCastPanel().add(boardcastGroupScrollPane);
 					GridBagConstraints gb = new GridBagConstraints();
+					GridBagConstraints gb1 = new GridBagConstraints();
+					gb.fill = GridBagConstraints.VERTICAL;
+					gb1.fill = GridBagConstraints.VERTICAL;
+					gb1.insets.bottom=10;
+					gb1.gridy=0;
+					windowUI.getSetGroupBoardcastPanel().add(windowUI.getSetTestTimePanel(),gb1);
+					gb1.gridy=1;
+					windowUI.getSetGroupBoardcastPanel().add(windowUI.getSetStartTimePanel(),gb1);
+					gb1.gridy=GridBagConstraints.VERTICAL;
+					gb1.ipadx = 500;
+					gb1.ipady = 400;
+					windowUI.getSetGroupBoardcastPanel().add(windowUI.getGroupBoardCastPanel(),gb1);
+					gb1.ipady = 10;
+					gb1.ipadx = 10;
+					gb1.gridy = 4;
+					windowUI.getSetGroupBoardcastPanel().add(windowUI.getStartBoardcast(),gb1);
 					gb.gridx = 0;
 					gb.ipadx = 0;
-					gb.fill = GridBagConstraints.VERTICAL;
 					for (final GroupInfo group : groupInfoList.values()) {
 						final JLabel jLabel = new JLabel(group.getGroupName());
 						jLabel.setBorder(BorderFactory.createTitledBorder("原群名"));
@@ -2303,14 +2379,32 @@ public class Main {
 											JOptionPane.ERROR_MESSAGE);
 							}
 						});
-						// 添加跨群设置列表
+						// 添加跨群设置列表及直播群列表
 						final JCheckBox groupCheckBox = new JCheckBox(group.getGroupName()+"("+group.getGroupNumberId()+")");
+						final JCheckBox groupListBox = new JCheckBox(group.getGroupName()+"("+group.getGroupNumberId()+")");
+						final JCheckBox boardcastCheckBox = new JCheckBox(group.getGroupName()+"("+group.getGroupNumberId()+")");
 						groupCheckBox.setSelected(group.getAcrossGroupFlag());
+						boardcastCheckBox.setSelected(group.getBoardcastFlag());
+						groupListBox.setSelected(group.getFromGroupFlag());
 						groupListJPanel.add(groupCheckBox);
+						groupBoardcastPanel.add(groupListBox);
+						boardcastGroupListPanel.add(boardcastCheckBox);
 						groupCheckBox.addChangeListener(new ChangeListener() {
 							@Override
 							public void stateChanged(ChangeEvent arg0) {
 								group.setAcrossGroupFlag(groupCheckBox.isSelected());
+							}
+						});
+						boardcastCheckBox.addChangeListener(new ChangeListener() {
+							@Override
+							public void stateChanged(ChangeEvent e) {
+								group.setBoardcastFlag(boardcastCheckBox.isSelected());
+							}
+						});
+						groupListBox.addChangeListener(new ChangeListener() {
+							@Override
+							public void stateChanged(ChangeEvent e) {
+								group.setFromGroupFlag(groupListBox.isSelected());
 							}
 						});
 						groupCheckBox.addActionListener(new ActionListener() {
@@ -2319,7 +2413,7 @@ public class Main {
 							public void actionPerformed(ActionEvent e) {
 								groupMemberListJPanel.removeAll();
 								for (GroupInfo groupInfo : groupInfoList.values())
-									if (groupInfo.getGroupName().equals(groupCheckBox.getText().split("\\(")[0])
+									if (groupCheckBox.getText().equals(groupInfo.getGroupName()+"("+groupInfo.getGroupNumberId()+")")
 											&& groupInfo.getAcrossGroupFlag()) {
 										for (final UserInfo userInfo : groupInfo.getGroup().values()) {
 											final JCheckBox memberCheckBox = new JCheckBox(userInfo.getRemarkName()+"("+userInfo.getUin()+")");
@@ -2338,8 +2432,61 @@ public class Main {
 								groupMemberListJPanel.updateUI(); // 立即刷新页面
 							}
 						});
+						groupListBox.addActionListener(new ActionListener() {
+
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								memberListPanel.removeAll();
+								for (GroupInfo groupInfo : groupInfoList.values())
+									if (groupListBox.getText().equals(groupInfo.getGroupName()+"("+groupInfo.getGroupNumberId()+")")
+											&& groupInfo.getFromGroupFlag()) {
+										for (final UserInfo userInfo : groupInfo.getGroup().values()) {
+											final JCheckBox memberCheckBox = new JCheckBox(userInfo.getRemarkName()+"("+userInfo.getUin()+")");
+											memberCheckBox.setSelected(userInfo.isBoardcastFlag());
+											memberListPanel.add(memberCheckBox);
+											memberCheckBox.addChangeListener(new ChangeListener() {
+
+												@Override
+												public void stateChanged(ChangeEvent changeevent) {
+													userInfo.setBoardcastFlag(memberCheckBox.isSelected());
+												}
+											});
+										}
+										break;
+									}
+								memberListPanel.updateUI(); // 立即刷新页面
+							}
+						});
 
 					}
+					windowUI.getStartBoardcast().addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							isBoardcast = true;
+							isTest = false;
+							isStart = false;
+							isDiscuss = false;
+							isEnd = false;
+
+							try{
+								testEndTime = windowUI.getDf().parse(windowUI.getBoardcastTestEndHour().getSelectedItem().toString()+":"+windowUI.getBoardcastTestEndMinute().getSelectedItem().toString());
+								boardStartTime = windowUI.getDf().parse(windowUI.getBoardcastStartHour().getSelectedItem().toString()+":"+windowUI.getBoardcastStartMinute().getSelectedItem().toString());
+								boardcastEndTime = windowUI.getDf().parse(windowUI.getBoardcastEndHour().getSelectedItem().toString()+":"+windowUI.getBoardcastEndMinute().getSelectedItem().toString());
+//							windowUI.getStartBoardcast().setEnabled(false);
+								testStartTime = windowUI.getDf().parse(windowUI.getBoardcastTestHour().getSelectedItem().toString()+":"+windowUI.getBoardcastTestMinute().getSelectedItem().toString());
+								if(testEndTime.before(testStartTime)||boardcastEndTime.before(boardStartTime)) {
+									JOptionPane.showMessageDialog(null,"错误：开始时间必须在结束时间之前,请重新设置","信息提示",JOptionPane.ERROR_MESSAGE);
+									testEndTime = null;
+									testStartTime = null;
+									boardStartTime = null;
+									boardcastEndTime = null;
+								}
+							}catch (Exception e1){
+								e1.printStackTrace();
+							}
+
+						}
+					});
 					windowUI.getOnlineTimeHour().setSelectedItem(Integer.parseInt(onlineTime.split(":")[0]));
 					windowUI.getOnlineTimeMinute().setSelectedItem(Integer.parseInt(onlineTime.split(":")[1]));
 					windowUI.getOfflineTimeHour().setSelectedItem(Integer.parseInt(offlineTime.split(":")[0]));
@@ -2349,7 +2496,7 @@ public class Main {
 					if(apiKey.equals("49d5dd04005a4d82b7d5bc30dae96821"))
 						windowUI.getTulingKeyArea().setText("");
 					else
-					windowUI.getTulingKeyArea().setText(apiKey);
+						windowUI.getTulingKeyArea().setText(apiKey);
 				}
 			});
 
@@ -2361,7 +2508,7 @@ public class Main {
 					htmlUnit.getGroupList();
 					group.clear();
 					for (GroupInfo groupInfo : groupInfoList.values())
-						group.add(groupInfo.getGroupName());
+						group.add(groupInfo.getGroupName()+"("+groupInfo.getGroupNumberId()+")");
 					windowUI.setjList2(new JList(group));
 					invitedGroup = null;
 					windowUI.setjList1(new JList());
@@ -2420,7 +2567,7 @@ public class Main {
 								inviteFriendName.add(userInfo.getRemarkName());
 							for (GroupInfo groupInfo : groupInfoList.values()) {
 								if (groupInfo.getGroupName()
-										.equals(windowUI.getjList2().getSelectedValue().toString())) {
+										.equals(windowUI.getjList2().getSelectedValue().toString().split("\\(")[0])) {
 									invitedGroup = groupInfo;
 									for (UserInfo userInfo : groupInfo.getGroup().values())
 										inviteFriendName.remove(userInfo.getRemarkName());
@@ -2528,7 +2675,7 @@ public class Main {
 					htmlUnit.getGroupList();
 					group.clear();
 					for (GroupInfo groupInfo : groupInfoList.values())
-						group.add(groupInfo.getGroupName());
+						group.add(groupInfo.getGroupName()+"("+groupInfo.getGroupNumberId()+")");
 					windowUI.setjList3(new JList(group));
 					removeGroup = null;
 					windowUI.setjList4(new JList());
@@ -2571,7 +2718,7 @@ public class Main {
 							removeFriendName.clear();
 							for (GroupInfo groupInfo : groupInfoList.values())
 								if (groupInfo.getGroupName()
-										.equals(windowUI.getjList3().getSelectedValue().toString())) {
+										.equals(windowUI.getjList3().getSelectedValue().toString().split("\\(")[0])) {
 									removeGroup = groupInfo;
 									for (UserInfo userInfo : groupInfo.getGroup().values())
 										removeFriendName.add(userInfo.getRemarkName());
@@ -3310,6 +3457,7 @@ public class Main {
 				@Override
 				public void windowClosing(WindowEvent e) {
 					windowUI.getSet().setEnabled(true);
+					saveGroupName = selectedGroupName;
 				}
 
 				@Override
@@ -3345,7 +3493,7 @@ public class Main {
 
 				@Override
 				public void windowClosing(WindowEvent e) {
-                      windowUI.getModifyRemarkName().setEnabled(true);
+					windowUI.getModifyRemarkName().setEnabled(true);
 				}
 
 				@Override
