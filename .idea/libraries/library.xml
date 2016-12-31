@@ -11,14 +11,18 @@
       <root url="jar://$PROJECT_DIR$/mysql-connector-java-5.1.22-bin.jar!/" />
       <root url="jar://$PROJECT_DIR$/commons-codec-1.4.jar!/" />
       <root url="jar://$PROJECT_DIR$/je-analysis-1.5.3.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lucene-core-2.4.1.jar!/" />
       <root url="file://$PROJECT_DIR$" />
       <root url="file://$PROJECT_DIR$" />
       <root url="jar://$PROJECT_DIR$/out/artifacts/weChat_jar/ezmorph-1.0.3.jar!/" />
       <root url="jar://$USER_HOME$/Downloads/pinyin4j-2.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/out/artifacts/weChat_jar/lucene-core-3.4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/out/artifacts/weChat_jar/IKAnalyzer2012_u6.jar!/" />
+      <root url="file://$PROJECT_DIR$" />
+      <root url="file://$PROJECT_DIR$" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$" recursive="false" />
     <jarDirectory url="file://$PROJECT_DIR$" recursive="false" />
   </library>
 </component>
